@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
 from pathlib import Path
+
 import dj_database_url
 
 from django.template.context_processors import static
@@ -108,24 +109,27 @@ else:
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+from decouple import config
+
 
 if DEBUG:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-        }
+        'default': dj_database_url.config(
+            default=config('DATABASE_URL'),
+            conn_max_age=600
+        )
     }
 else:
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'defaultdb',
-            'USER': 'avnadmin',
-            'PASSWORD': 'AVNS_RqbTnyzhEWPm8uiBGTT',
-            'HOST': 'chatapp-chat111.d.aivencloud.com',
-            'PORT': '28686',
-        }
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
     }
+}
 
 
 # Password validation

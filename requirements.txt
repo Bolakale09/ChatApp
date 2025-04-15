@@ -4,3 +4,5 @@ django-debug-toolbar
 whitenoise
 uvicorn
 dj-database-url
+psycopg2-binary==2.9.10
+python-decouple
