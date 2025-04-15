@@ -89,7 +89,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'chatapp.wsgi.application'
 
-ASGI_APPLICATION = 'chatapp.asgi.application'
+ASGI_APPLICATION = 'uvicorn chatapp.asgi:application --host 0.0.0.0 --port $PORT'
 
 if DEBUG:
     CHANNEL_LAYERS = {
