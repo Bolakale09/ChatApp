@@ -1,4 +1,6 @@
 # This is a sample Python script.
+import os
+
 import uvicorn
 from fastapi import FastAPI
 # Press Shift+F10 to execute it or replace it with your code.
