@@ -172,6 +172,8 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',  # or os.path.join(BASE_DIR, 'static')
 ]
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key')
 
 # Default primary key field type
