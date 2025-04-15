@@ -1,0 +1,99 @@
+{% load static %}
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Chat App</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="chat-container">
+        <div class="sidebar">
+            <div class="header">
+                <div style="text-align: center;"><h2>Chat App</h2></div>
+            </div>
+            <div class="search-container">
+                <input type="text" id="user-search" placeholder="Search users...">
+            </div>
+            <div id="user-list" class="user-list">
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="welcome-message">
+                <h2>Welcome to the Chat App!</h2>
+                <p>Select a user from the sidebar to start chatting.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/main.js' %}"></script>
+    <script>
+        // Load users on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUsers();
+
+            // Connect to WebSocket
+            connectWebSocket();
+        });
+
+        function loadUsers() {
+            fetch('/api/users/')
+                .then(response => response.json())
+                .then(data => {
+                    const userList = document.getElementById('user-list');
+                    userList.innerHTML = '';
+
+                    let onlineCount = 0;
+
+                    data.users.forEach(user => {
+                        const userElement = document.createElement('div');
+                        userElement.className = 'user-item';
+
+                        const statusClass = user.status.toLowerCase();
+                        if (user.status === 'Online') onlineCount++;
+
+                        userElement.innerHTML = `
+                            <div class="user-avatar">
+                                <div class="status-indicator ${statusClass}"></div>
+                            </div>
+                            <div class="user-info">
+                                <div class="user-name">${user.username}</div>
+                                <div class="user-status">${user.status}</div>
+                            </div>
+                        `;
+
+                        userElement.addEventListener('click', function() {
+                            window.location.href = `/chat/${user.username}/`;
+                        });
+
+                        userList.appendChild(userElement);
+                    });
+
+                    document.getElementById('online-count').textContent = `${onlineCount} users online`;
+                })
+                .catch(error => console.error('Error loading users:', error));
+        }
+
+        function connectWebSocket() {
+            const chatSocket = new WebSocket(
+                'ws://' + window.location.host + '/ws/chat/'
+            );
+
+            chatSocket.onmessage = function(e) {
+                const data = JSON.parse(e.data);
+
+                if (data.type === 'user_status') {
+                    // Reload user list when someone's status changes
+                    loadUsers();
+                }
+            };
+
+            chatSocket.onclose = function(e) {
+                console.error('Chat socket closed unexpectedly');
+                // Try to reconnect after a few seconds
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+    </script>
+</body>
+</html>
