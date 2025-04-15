@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-vfvo3ftgr&ym_yxyf39owd(2^gpdz)imc$x%92*^%w1kl8it4l
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', '') == 'True'
 
-ALLOWED_HOSTS = ['chatapp-chat111.d.aivencloud.com', '']
+ALLOWED_HOSTS = ['chatapp-chat111.d.aivencloud.com']
 
 
 # Application definition
