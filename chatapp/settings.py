@@ -29,6 +29,8 @@ BASE_DIR: Path = Path(__file__).resolve().parent.parent
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 
+DATABASE_URL = os.getenv('DATABASE_URL')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', '') == 'False'
 
@@ -115,12 +117,12 @@ from decouple import config
 
 
 if not DEBUG:
-   DATABASES = {
-    'default': dj_database_url.config(
-        default=config('postgres://avnadmin:AVNS_RqbTnyzhEWPm8uiBGTT@chatapp-chat111.d.aivencloud.com:28686/defaultdb?sslmode=require'),
-        conn_max_age=600
-    )
-}
+    DATABASES = {
+        'default': {
+            # Configure your database using the DATABASE_URL
+            # You might use dj-database-url here to parse the URL
+        }
+    }
 else:
     DATABASES = {
         'default': {

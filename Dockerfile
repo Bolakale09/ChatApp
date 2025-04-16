@@ -23,6 +23,8 @@ RUN set -ex && \
 COPY . /code
 
 ENV SECRET_KEY "zsb1EFkhehJ3wSSul10mJWg56t5T4Ua1nEeNUy6ySaBGmR8F2Q"
+ENV DATABASE_URL "postgres://avnadmin:AVNS_RqbTnyzhEWPm8uiBGTT@chatapp-chat111.d.aivencloud.com:28686/defaultdb?sslmode=require"
+
 #RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
