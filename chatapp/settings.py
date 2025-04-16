@@ -16,6 +16,7 @@ import dj_database_url
 from dotenv import load_dotenv
 from django.template.context_processors import static
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR: Path = Path(__file__).resolve().parent.parent
 
@@ -114,12 +115,12 @@ from decouple import config
 
 
 if not DEBUG:
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=config('postgres://avnadmin:AVNS_RqbTnyzhEWPm8uiBGTT@chatapp-chat111.d.aivencloud.com:28686/defaultdb?sslmode=require'),
-            conn_max_age=600
-        )
-    }
+   DATABASES = {
+    'default': dj_database_url.config(
+        default=config('postgres://avnadmin:AVNS_RqbTnyzhEWPm8uiBGTT@chatapp-chat111.d.aivencloud.com:28686/defaultdb?sslmode=require'),
+        conn_max_age=600
+    )
+}
 else:
     DATABASES = {
         'default': {
@@ -165,12 +166,14 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Create this directory if it doesn't exist
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',  # or os.path.join(BASE_DIR, 'static')
+    os.path.join(BASE_DIR, 'static'),
 ]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+# BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key')
 
