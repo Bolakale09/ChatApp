@@ -34,10 +34,10 @@ ENV DATABASE_URL "postgres://avnadmin:AVNS_RqbTnyzhEWPm8uiBGTT@chatapp-chat111.d
 EXPOSE 8000
 
 CMD python manage.py migrate && \
-    python -c "import django; django.setup(); \
-    from django.contrib.auth import get_user_model; \
-    User = get_user_model(); \
+    python -c "import django django.setup() \
+    from django.contrib.auth import get_user_model \
+    User = get_user_model() \
     if not User.objects.filter(username='$DJANGO_SUPERUSER_USERNAME').exists(): \
-        from django.core.management import call_command; \
+        from django.core.management import call_command \
         call_command('createsuperuser', '--noinput')" && \
     python manage.py migrate && gunicorn --bind :8000 --workers 1 --worker-class uvicorn.workers.UvicornWorker chatapp.asgi
