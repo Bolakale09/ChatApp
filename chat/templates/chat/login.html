@@ -68,8 +68,8 @@
 <body>
     <div class="login-container">
         <h1>Chat App Login</h1>
-        {% csrf_token %}
         <form method="post" action="">
+            {% csrf_token %}
             {% if form.errors %}
                 <div class="error-message">
                     Your username and password didn't match. Please try again.
