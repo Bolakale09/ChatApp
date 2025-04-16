@@ -116,7 +116,7 @@ from decouple import config
 if not DEBUG:
     DATABASES = {
         'default': dj_database_url.config(
-            default=config('postgresql://chatapdb.flycast'),
+            default=config('postgres://avnadmin:AVNS_RqbTnyzhEWPm8uiBGTT@chatapp-chat111.d.aivencloud.com:28686/defaultdb?sslmode=require'),
             conn_max_age=600
         )
     }
