@@ -36,7 +36,11 @@ DEBUG = os.environ.get('DJANGO_DEBUG', '') == 'False'
 ALLOWED_HOSTS = ['*']
 
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='').split(',')
-
+CSRF_COOKIE_SECURE = True
+CSRF_TRUSTED_ORIGINS = [
+    'https://chatapp-swfkkg.fly.dev/',
+    'http://localhost:8000',  # For local development
+]
 # Application definition
 
 INSTALLED_APPS = [
