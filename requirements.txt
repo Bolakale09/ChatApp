@@ -16,3 +16,4 @@ tzdata==2025.2
 whitenoise==6.9.0
 uvicorn[standard]
 gunicorn
+python-dotenv

@@ -13,7 +13,7 @@ import os
 from pathlib import Path
 
 import dj_database_url
-
+from dotenv import load_dotenv
 from django.template.context_processors import static
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -24,13 +24,16 @@ BASE_DIR: Path = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-vfvo3ftgr&ym_yxyf39owd(2^gpdz)imc$x%92*^%w1kl8it4l'
+
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', '') == 'True'
 
-ALLOWED_HOSTS = ['chatapp-chat111.d.aivencloud.com']
+ALLOWED_HOSTS = ['*']
 
+CSRF_TRUSTED_ORIGINS = ["https://ChatApp.fly.dev"]
 
 # Application definition
 
@@ -55,10 +58,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-    # 'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
-
-# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 INTERNAL_IPS = [
     # ...
@@ -112,22 +113,18 @@ else:
 from decouple import config
 
 
-if DEBUG:
+if not DEBUG:
     DATABASES = {
         'default': dj_database_url.config(
-            default=config('DATABASE_URL'),
+            default=config('postgres://avnadmin:AVNS_RqbTnyzhEWPm8uiBGTT@chatapp-chat111.d.aivencloud.com:28686/defaultdb?sslmode=require'),
             conn_max_age=600
         )
     }
 else:
     DATABASES = {
         'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / ('db.sqlite3'),
     }
 }
 
@@ -171,6 +168,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'  # or os.path.join(BASE_DIR, 'staticfiles
 STATICFILES_DIRS = [
     BASE_DIR / 'static',  # or os.path.join(BASE_DIR, 'static')
 ]
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
