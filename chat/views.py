@@ -75,7 +75,8 @@ def send_message(request):
 
         try:
             recipient = User.objects.get(username=recipient_username)
-            Message.objects.create(sender=request.user, recipient=recipient, content=content)
+            Message.objects.create(sender=request.user, receiver=recipient, content=content)
+
             return JsonResponse({'status': 'success'})
         except User.DoesNotExist:
             return JsonResponse({'status': 'error', 'message': 'Recipient not found'})
