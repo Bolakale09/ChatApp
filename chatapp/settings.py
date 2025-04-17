@@ -183,4 +183,4 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = 'index'
+LOGIN_REDIRECT_URL = 'chat_room'
