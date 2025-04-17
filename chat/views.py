@@ -19,7 +19,7 @@ def signup_view(request):
             raw_password = form.cleaned_data.get('password1')
             user = authenticate(username=username, password=raw_password)
             login(request, user)
-            return redirect('index')  # Redirect to your chat homepage
+            return redirect('login')  # Redirect to your chat homepage
     else:
         form = SignUpForm()
     return render(request, 'chat/signup.html', {'form': form})
