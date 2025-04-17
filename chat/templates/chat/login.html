@@ -1,81 +1,19 @@
-{% load static %}
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Chat App</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f2f5;
-        }
+{% extends 'base.html' %}
+{% block title %}Login - Chat App{% endblock %}
 
-        .login-container {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            width: 400px;
-        }
-
-        .login-container h1 {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #1877f2;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 10px;
-            background-color: #1877f2;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .submit-btn:hover {
-            background-color: #166fe5;
-        }
-
-        .error-message {
-            color: #f02849;
-            margin-bottom: 15px;
-        }
-    </style>
-</head>
+{% block content %}
 <body>
     <div class="login-container">
         <h1>Chat App Login</h1>
-        <form method="post" action="">
+        
+        {% if form.errors %}
+            <div class="error-message">
+                Your username and password didn't match. Please try again.
+            </div>
+        {% endif %}
+        
+        <form method="post" action="{% url 'login' %}">
             {% csrf_token %}
-            {% if form.errors %}
-                <div class="error-message">
-                    Your username and password didn't match. Please try again.
-                </div>
-            {% endif %}
-
             <div class="form-group">
                 <label for="id_username">Username:</label>
                 <input type="text" name="username" id="id_username" required>
@@ -87,12 +25,21 @@
             </div>
 
             <button type="submit" class="submit-btn">Log In</button>
+            
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}">
+            {% endif %}
         </form>
+        
+        <div class="signup-prompt">
+            <p>Don't have an account? <a href="{% url 'signup' %}" class="signup-link">Sign Up</a></p>
+        </div>
     </div>
+    
     <div class="logout-container">
         {% if user.is_authenticated %}
-            <a href="{% url 'logout' %}">Logout</a>
+            <a href="{% url 'logout' %}" class="logout-link">Logout</a>
         {% endif %}
     </div>
 </body>
-</html>
+{% endblock %}
