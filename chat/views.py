@@ -3,6 +3,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+
+from . import models
 from .models import Message
 
 def login_view(request):
@@ -13,7 +15,7 @@ def login_view(request):
         if user is not None:
             login(request, user)
             return redirect('chat')
-    return render(request, 'login.html')
+    return render(request, 'chat/login.html')
 
 def signup_view(request):
     if request.method == 'POST':
@@ -23,7 +25,7 @@ def signup_view(request):
             return redirect('login')
     else:
         form = UserCreationForm()
-    return render(request, 'signup.html', {'form': form})
+    return render(request, 'chat/signup.html', {'form': form})
 
 def logout_view(request):
     logout(request)
@@ -35,4 +37,4 @@ def chat_view(request):
     messages = Message.objects.filter(
         models.Q(sender=request.user) | models.Q(receiver=request.user)
     ).order_by('timestamp')
-    return render(request, 'chat.html', {'users': users, 'messages': messages})
+    return render(request, 'chat/chat.html', {'users': users, 'messages': messages})
