@@ -3,12 +3,12 @@ from django.contrib.auth.models import User
 
 # Create your models here.
 
-class ChatUser(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    status = models.CharField(max_length=20, default='Away')
-
-    def __str__(self):
-        return self.user.username
+# class ChatUser(models.Model):
+#     user = models.OneToOneField(User, on_delete=models.CASCADE)
+#     status = models.CharField(max_length=20, default='Away')
+#
+#     def __str__(self):
+#         return self.user.username
 
 
 class Message(models.Model):
@@ -21,4 +21,4 @@ class Message(models.Model):
         ordering = ['timestamp']
 
     def __str__(self):
-        return f"{self.sender} to {self.receiver}: {self.content[:20]}"
+        return f"{self.sender} to {self.receiver}: {self.content}"

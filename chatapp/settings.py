@@ -109,7 +109,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'chatapp.wsgi.application'
+# WSGI_APPLICATION = 'chatapp.wsgi.application'
 
 ASGI_APPLICATION = 'chatapp.asgi.application'
 
@@ -183,4 +183,5 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_REDIRECT_URL = 'chat_home'
+LOGIN_REDIRECT_URL = 'chat'
+LOGOUT_REDIRECT_URL = 'login'

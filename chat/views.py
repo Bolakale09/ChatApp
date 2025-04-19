@@ -1,106 +1,38 @@
 from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.contrib.auth import logout, login, authenticate
-from .forms import SignUpForm
 from django.contrib.auth.models import User
 from .models import Message
-from django.db.models import Q
 
-# Create your views here.
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('chat')
+    return render(request, 'login.html')
 
 def signup_view(request):
     if request.method == 'POST':
-        form = SignUpForm(request.POST)
+        form = UserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            # Auto-login after signup
-            username = form.cleaned_data.get('username')
-            raw_password = form.cleaned_data.get('password1')
-            user = authenticate(username=username, password=raw_password)
-            login(request, user)
-            return redirect('chat_home')  # Redirect to your chat homepage
+            form.save()
+            return redirect('login')
     else:
-        form = SignUpForm()
-    return render(request, 'chat/signup.html', {'form': form})
+        form = UserCreationForm()
+    return render(request, 'signup.html', {'form': form})
 
-@login_required
-def chat_home(request):
-    return render(request, 'chat/chat_home.html')
-
-@login_required
 def logout_view(request):
     logout(request)
     return redirect('login')
 
-
 @login_required
-def chat_room(request, username):
-    try:
-        chat_partner = User.objects.get(username=username)
-        return render(request, 'chat/chat_room.html', {
-            'chat_partner': chat_partner
-        })
-    except User.DoesNotExist:
-        return  render(request, 'chat/user_not_found.html')
-
-
-@login_required
-def user_list(request):
+def chat_view(request):
     users = User.objects.exclude(id=request.user.id)
-    user_data = []
-
-    for user in users:
-        try:
-            status = user.chatuser.status
-        except:
-            status = 'Offline'
-
-        user_data.append({
-            'id': user.id,
-            'username': user.username,
-            'status': status
-        })
-
-    return JsonResponse({'users': user_data})
-
-
-@login_required
-def send_message(request):
-    if request.method == 'POST':
-        recipient_username = request.POST.get('recipient')
-        content = request.POST.get('content')
-        if not recipient_username or not content:
-            return JsonResponse({'status': 'error', 'message': 'Missing recipient or content'})
-
-        try:
-            recipient = User.objects.get(username=recipient_username)
-            Message.objects.create(sender=request.user, receiver=recipient, content=content)
-
-            return JsonResponse({'status': 'success'})
-        except User.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'Recipient not found'})
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
-
-
-@login_required
-def message_history(request, username):
-    try:
-        chat_partner = User.objects.get(username=username)
-        messages = Message.objects.filter(
-            (Q(sender=request.user) & Q(receiver=chat_partner)) |
-            (Q(sender=chat_partner) & Q(receiver=request.user))
-        ).order_by('timestamp')
-
-        message_data = []
-        for msg in messages:
-            message_data.append({
-                'id': msg.id,
-                'content': msg.content,
-                'sender': msg.sender.username,
-                'timestamp': msg.timestamp.strftime('%H:%M %p')
-            })
-
-        return JsonResponse({'messages': message_data})
-    except User.DoesNotExist:
-        return JsonResponse({'error': 'User not found'}, status=404)
+    messages = Message.objects.filter(
+        models.Q(sender=request.user) | models.Q(receiver=request.user)
+    ).order_by('timestamp')
+    return render(request, 'chat.html', {'users': users, 'messages': messages})

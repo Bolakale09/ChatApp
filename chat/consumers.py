@@ -1,149 +1,55 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from channels.db import database_sync_to_async
 from django.contrib.auth.models import User
-from .models import Message, ChatUser
-from django.utils import timezone
-
+from .models import Message
+from channels.db import database_sync_to_async
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.user = self.scope['user']
-        print(f"WebSocket connection: user={self.user}, authenticated={self.user.is_authenticated}")
-
-        if not self.user.is_authenticated:
-            await self.close()
-            return
-
-        self.username = self.user.username
-
-        # Join user-specific group
+        self.room_name = f'chat_{self.scope["user"].id}'
         await self.channel_layer.group_add(
-            f"user_{self.username}",
+            self.room_name,
             self.channel_name
         )
-
-        # Join general notification group
-        await self.channel_layer.group_add(
-            "users_status",
-            self.channel_name
-        )
-
-        # Update user status to online
-        await self.update_user_status('Online')
-
-        # Broadcast user online status
-        await self.channel_layer.group_send(
-            "users_status",
-            {
-                'type': 'user_status',
-                'username': self.username,
-                'status': 'Online'
-            }
-        )
-
         await self.accept()
 
     async def disconnect(self, close_code):
-        # Update user status to offline
-        await self.update_user_status('Offline')
-
-        # Broadcast user offline status
-        await self.channel_layer.group_send(
-            "users_status",
-            {
-                'type': 'user_status',
-                'username': self.username,
-                'status': 'Offline'
-            }
-        )
-
-        # Leave groups
         await self.channel_layer.group_discard(
-            f"user_{self.username}",
-            self.channel_name
-        )
-        await self.channel_layer.group_discard(
-            "users_status",
+            self.room_name,
             self.channel_name
         )
 
     async def receive(self, text_data):
-        data = json.loads(text_data)
-        print(f"Received WebSocket data: {data}")
-        message_type = data.get('type', 'chat_message')
+        text_data_json = json.loads(text_data)
+        message = text_data_json['message']
+        receiver_id = text_data_json['receiver_id']
 
-        if message_type == 'chat_message':
-            message = data['message']
-            recipient = data['recipient']
-            print(f"Processing message: {message} to {recipient}")
+        await self.save_message(message, receiver_id)
 
-            # Save message to database
-            await self.save_message(recipient, message)
-
-            # Send message to recipient
-            await self.channel_layer.group_send(
-                f"user_{recipient}",
-                {
-                    'type': 'chat_message',
-                    'message': message,
-                    'sender': self.username,
-                    'timestamp': timezone.now().strftime('%H:%M %p')
-                }
-            )
-
-            # Send confirmation back to sender
-            await self.send(text_data=json.dumps({
-                'type': 'message_sent',
+        await self.channel_layer.group_send(
+            f'chat_{receiver_id}',
+            {
+                'type': 'chat_message',
                 'message': message,
-                'recipient': recipient,
-                'timestamp': timezone.now().strftime('%H:%M %p')
-            }))
+                'sender': self.scope['user'].username
+            }
+        )
 
-        elif message_type == 'status_change':
-            status = data['status']
-            await self.update_user_status(status)
-
-            # Broadcast status change
-            await self.channel_layer.group_send(
-                "users_status",
-                {
-                    'type': 'user_status',
-                    'username': self.username,
-                    'status': status
-                }
-            )
+        await self.send(text_data=json.dumps({
+            'message': message,
+            'sender': self.scope['user'].username
+        }))
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
-            'type': 'chat_message',
             'message': event['message'],
-            'sender': event['sender'],
-            'timestamp': event['timestamp']
-        }))
-
-    async def user_status(self, event):
-        await self.send(text_data=json.dumps({
-            'type': 'user_status',
-            'username': event['username'],
-            'status': event['status']
+            'sender': event['sender']
         }))
 
     @database_sync_to_async
-    def save_message(self, recipient_username, content):
-        try:
-            recipient = User.objects.get(username=recipient_username)
-            Message.objects.create(
-                sender=self.scope['user'],
-                receiver=recipient,
-                content=content
-            )
-            print(f"Message saved: {content}")
-        except Exception as e:
-            print(f"Error saving message: {e}")
-
-    @database_sync_to_async
-    def update_user_status(self, status):
-        chat_user, _ = ChatUser.objects.get_or_create(user=self.scope['user'])
-        chat_user.status = status
-        chat_user.save()
+    def save_message(self, message, receiver_id):
+        Message.objects.create(
+            sender=self.scope['user'],
+            receiver=User.objects.get(id=receiver_id),
+            content=message
+        )
