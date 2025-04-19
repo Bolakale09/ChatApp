@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-screen bg-gray-100">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-bold text-center mb-6">Sign Up</h2>
+        <form method="post" action="{% url 'signup' %}">
+            {% csrf_token %}
+            <!-- Username Field -->
+            <div class="mb-4">
+                <label class="block text-gray-700" for="id_username">Username</label>
+                <input type="text" name="username" id="id_username" class="w-full p-2 border rounded" required>
+                {% if form.username.errors %}
+                    <p class="text-red-500 text-sm mt-1">
+                        {% for error in form.username.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+            <!-- Password1 Field -->
+            <div class="mb-4">
+                <label class="block text-gray-700" for="id_password1">Password</label>
+                <input type="password" name="password1" id="id_password1" class="w-full p-2 border rounded" required>
+                {% if form.password1.errors %}
+                    <p class="text-red-500 text-sm mt-1">
+                        {% for error in form.password1.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+            <!-- Password2 Field -->
+            <div class="mb-4">
+                <label class="block text-gray-700" for="id_password2">Confirm Password</label>
+                <input type="password" name="password2" id="id_password2" class="w-full p-2 border rounded" required>
+                {% if form.password2.errors %}
+                    <p class="text-red-500 text-sm mt-1">
+                        {% for error in form.password2.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+            </div>
+            <!-- Display Messages (e.g., success message after signup) -->
+            {% if messages %}
+                {% for message in messages %}
+                    <p class="text-green-500 text-sm text-center mb-4">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+            <!-- Submit Button -->
+            <button type="submit" class="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600">Sign Up</button>
+        </form>
+        <p class="mt-4 text-center">Already have an account? <a href="{% url 'login' %}" class="text-green-500">Login</a></p>
+    </div>
+</div>
+{% endblock %}

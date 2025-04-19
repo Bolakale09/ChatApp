@@ -3,9 +3,18 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.contrib import messages
+from django.db.models import Q
+from .models import Message, UserProfile
 
-from . import models
-from .models import Message
+@login_required
+def chat_view(request):
+    # Use select_related for OneToOneField
+    users = User.objects.exclude(id=request.user.id).select_related('userprofile')
+    messages = Message.objects.filter(
+        Q(sender=request.user) | Q(receiver=request.user)
+    ).select_related('sender__userprofile', 'receiver__userprofile').order_by('timestamp')
+    return render(request, 'chat.html', {'users': users, 'messages': messages})
 
 def login_view(request):
     if request.method == 'POST':
@@ -14,27 +23,26 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
+            # Create a UserProfile if it doesn't exist
+            UserProfile.objects.get_or_create(user=user)
             return redirect('chat')
-    return render(request, 'chat/login.html')
+        else:
+            messages.error(request, 'Invalid username or password.')
+    return render(request, 'login.html')
 
 def signup_view(request):
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()
+            # Create a UserProfile for the new user
+            UserProfile.objects.get_or_create(user=user)
+            messages.success(request, 'Account created successfully. Please log in.')
             return redirect('login')
     else:
         form = UserCreationForm()
-    return render(request, 'chat/signup.html', {'form': form})
+    return render(request, 'signup.html', {'form': form})
 
 def logout_view(request):
     logout(request)
     return redirect('login')
-
-@login_required
-def chat_view(request):
-    users = User.objects.exclude(id=request.user.id)
-    messages = Message.objects.filter(
-        models.Q(sender=request.user) | models.Q(receiver=request.user)
-    ).order_by('timestamp')
-    return render(request, 'chat/chat.html', {'users': users, 'messages': messages})

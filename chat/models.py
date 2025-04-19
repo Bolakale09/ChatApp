@@ -11,14 +11,18 @@ from django.contrib.auth.models import User
 #         return self.user.username
 
 
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_picture = models.ImageField(upload_to='profiles/', default='images/profile-icon.png')
+
+    def __str__(self):
+        return f"{self.user.username}'s profile"
+
 class Message(models.Model):
-    sender = models.ForeignKey(User, related_name='sent_messages', on_delete=models.CASCADE)
-    receiver = models.ForeignKey(User, related_name='received_messages', on_delete=models.CASCADE)
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        ordering = ['timestamp']
-
     def __str__(self):
-        return f"{self.sender} to {self.receiver}: {self.content}"
+        return self.content

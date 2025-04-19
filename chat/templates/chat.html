@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chat{% endblock %}
+
+{% block content %}
+<div class="flex h-screen">
+    <!-- Sidebar -->
+    <div class="w-1/4 bg-white border-r">
+        <div class="p-4 bg-green-500 text-white flex justify-center items-center relative">
+            <h2 class="text-lg font-bold">Chats</h2>
+            <a href="{% url 'logout' %}" class="absolute right-4 text-sm">Logout</a>
+        </div>
+        <ul>
+            {% for user in users %}
+                <li class="p-4 border-b flex items-center hover:bg-gray-100 cursor-pointer" onclick="selectUser({{ user.id }}, '{{ user.username }}')">
+                    <img src="{% if user.userprofile %}{{ user.userprofile.profile_picture.url }}{% else %}{% static 'images/profile-icon.png' %}{% endif %}" alt="Profile" class="w-8 h-8 rounded-full mr-2">
+                    {{ user.username }}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <!-- Chat Area -->
+    <div class="w-3/4 flex flex-col">
+        <div id="chat-header" class="p-4 bg-green-500 text-white flex items-center">
+            <img src="{% static 'images/profile-icon.png' %}" alt="Profile" class="w-8 h-8 rounded-full mr-2">
+            <h2 id="receiver-name" class="text-lg font-bold">Select a user to chat</h2>
+        </div>
+        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto bg-whatsapp-bg">
+            {% for message in messages %}
+                <div class="mb-2 flex {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %}">
+                    {% if message.sender != request.user %}
+                        <img src="{% if message.sender.userprofile %}{{ message.sender.userprofile.profile_picture.url }}{% else %}{% static 'images/profile-icon.png' %}{% endif %}" alt="Profile" class="w-8 h-8 rounded-full mr-2 self-end">
+                    {% endif %}
+                    <div class="inline-block p-2 rounded-lg {% if message.sender == request.user %}bg-green-100{% else %}bg-white{% endif %}">
+                        <p class="text-sm">{{ message.content }}</p>
+                        <p class="text-xs text-gray-500">{{ message.timestamp|date:"H:i" }}</p>
+                    </div>
+                    {% if message.sender == request.user %}
+                        <img src="{% if message.sender.userprofile %}{{ message.sender.userprofile.profile_picture.url }}{% else %}{% static 'images/profile-icon.png' %}{% endif %}" alt="Profile" class="w-8 h-8 rounded-full ml-2 self-end">
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="p-4 bg-white border-t">
+            <form id="message-form" onsubmit="sendMessage(event)">
+                <input type="hidden" id="receiver-id">
+                <div class="flex items-center">
+                    <input type="text" id="message-input" class="flex-1 p-2 border rounded-full" placeholder="Type a message">
+                    <button type="submit" class="bg-green-500 text-white w-10 h-10 rounded-full flex items-center justify-center ml-2">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="{% static 'js/chat.js' %}"></script>
+{% endblock %}
