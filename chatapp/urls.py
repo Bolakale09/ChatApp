@@ -10,6 +10,6 @@ def favicon(request):
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('chat.urls')),
-    path('__debug__/', include('debug_toolbar.urls')),
+    # path('__debug__/', include('debug_toolbar.urls')),
     path('favicon.ico', favicon),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
