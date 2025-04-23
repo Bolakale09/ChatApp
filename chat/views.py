@@ -36,9 +36,13 @@ def signup_view(request):
         if form.is_valid():
             user = form.save()
             # Create a UserProfile for the new user
-            UserProfile.objects.get_or_create(user=user)
-            messages.success(request, 'Account created successfully. Please log in.')
+            UserProfile.objects.create(user=user)
+            username = form.cleaned_data.get('username')
+            messages.success(request, f'Account created for {username}! You can now log in.')
             return redirect('login')
+        else:
+            # This will pass the form with errors back to the template
+            return render(request, 'signup.html', {'form': form})
     else:
         form = UserCreationForm()
     return render(request, 'signup.html', {'form': form})

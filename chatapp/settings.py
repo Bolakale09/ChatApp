@@ -87,11 +87,6 @@ MIDDLEWARE = [
 #     "127.0.0.1",
 #     # ...
 # ]
-
-# if not DEBUG:
-    # STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-
 ROOT_URLCONF = 'chatapp.urls'
 
 TEMPLATES = [

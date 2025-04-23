@@ -1,4 +1,6 @@
-let ws = new WebSocket('ws://' + window.location.host + '/ws/chat/');
+// Use dynamic protocol (ws or wss) based on current page protocol
+let protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+let ws = new WebSocket(protocol + '//' + window.location.host + '/ws/chat/');
 let currentReceiverId = null;
 
 function selectUser(userId, username) {
@@ -12,7 +14,9 @@ function selectUser(userId, username) {
         .then(data => {
             const chatMessages = document.getElementById('chat-messages');
             chatMessages.innerHTML = '';
-            const loggedInUser = '{{ request.user.username }}';
+            // Get username from data attribute instead of template variable
+            const loggedInUser = chatMessages.dataset.username;
+
             data.forEach(message => {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = message.sender === loggedInUser ? 'flex justify-end mb-2' : 'flex justify-start mb-2';
@@ -27,13 +31,16 @@ function selectUser(userId, username) {
                 chatMessages.appendChild(messageDiv);
             });
             chatMessages.scrollTop = chatMessages.scrollHeight;
+        })
+        .catch(error => {
+            console.error("Error fetching messages:", error);
         });
 }
 
 function sendMessage(event) {
     event.preventDefault();
     const messageInput = document.getElementById('message-input');
-    const message = messageInput.value;
+    const message = messageInput.value.trim();
     const receiverId = document.getElementById('receiver-id').value;
 
     if (message && receiverId) {
@@ -45,10 +52,17 @@ function sendMessage(event) {
     }
 }
 
+// WebSocket connection handlers
+ws.onopen = function() {
+    console.log("WebSocket connection established");
+};
+
 ws.onmessage = function(event) {
     const data = JSON.parse(event.data);
     const chatMessages = document.getElementById('chat-messages');
-    const loggedInUser = '{{ request.user.username }}';
+    // Get username from data attribute instead of template variable
+    const loggedInUser = chatMessages.dataset.username;
+
     const messageDiv = document.createElement('div');
     messageDiv.className = data.sender === loggedInUser ? 'flex justify-end mb-2' : 'flex justify-start mb-2';
     messageDiv.innerHTML = `
@@ -61,4 +75,17 @@ ws.onmessage = function(event) {
     `;
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+};
+
+ws.onclose = function() {
+    console.error("WebSocket connection closed. Attempting to reconnect...");
+    // Try to reconnect after a delay
+    setTimeout(function() {
+        protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        ws = new WebSocket(protocol + '//' + window.location.host + '/ws/chat/');
+    }, 3000);
+};
+
+ws.onerror = function(error) {
+    console.error("WebSocket error:", error);
 };

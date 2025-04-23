@@ -26,7 +26,8 @@
             <img src="{% static 'images/profile-icon.png' %}" alt="Profile" class="w-8 h-8 rounded-full mr-2">
             <h2 id="receiver-name" class="text-lg font-bold">Select a user to chat</h2>
         </div>
-        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto bg-whatsapp-bg">
+        <!-- Add data-username attribute to store the current user's username -->
+        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto bg-whatsapp-bg" data-username="{{ request.user.username }}">
             {% for message in messages %}
                 <div class="mb-2 flex {% if message.sender == request.user %}justify-end{% else %}justify-start{% endif %}">
                     {% if message.sender != request.user %}
