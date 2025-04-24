@@ -33,6 +33,7 @@ ENV DATABASE_URL "postgres://avnadmin:AVNS_RqbTnyzhEWPm8uiBGTT@chatapp-chat111.d
 
 EXPOSE 8000
 
-CMD python manage.py migrate && \
+CMD python manage.py makemigrations && \
+    python manage.py migrate && \
     python create_superuser.py && \
     gunicorn --bind :8000 --workers 1 --worker-class uvicorn.workers.UvicornWorker chatapp.asgi
