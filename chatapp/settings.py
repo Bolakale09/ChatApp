@@ -31,7 +31,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DATABASE_URL = config('DATABASE_URL', default='postgres://avnadmin:AVNS_RqbTnyzhEWPm8uiBGTT@chatapp-chat111.d.aivencloud.com:28686/defaultdb?sslmode=require')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
