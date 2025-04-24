@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm
@@ -15,6 +16,41 @@ def chat_view(request):
         Q(sender=request.user) | Q(receiver=request.user)
     ).select_related('sender__userprofile', 'receiver__userprofile').order_by('timestamp')
     return render(request, 'chat.html', {'users': users, 'messages': messages})
+
+
+@login_required
+def get_messages(request):
+    # API endpoint to get messages for a specific receiver
+    receiver_id = request.GET.get('receiver')
+
+    if not receiver_id:
+        return JsonResponse({'error': 'Receiver ID is required'}, status=400)
+
+    try:
+        receiver = User.objects.get(id=receiver_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'Receiver not found'}, status=404)
+
+    # Get messages between current user and selected receiver
+    messages = Message.objects.filter(
+        (Q(sender=request.user) & Q(receiver=receiver)) |
+        (Q(sender=receiver) & Q(receiver=request.user))
+    ).select_related('sender', 'receiver').order_by('timestamp')
+
+    # Convert messages to JSON-serializable format
+    message_list = []
+    for message in messages:
+        message_dict = {
+            'id': message.id,
+            'content': message.content,
+            'timestamp': message.timestamp.isoformat(),
+            'sender': message.sender.username,
+            'sender_profile_picture': message.sender.userprofile.profile_picture.url if hasattr(message.sender,
+                                                                                                'userprofile') and message.sender.userprofile.profile_picture else None,
+        }
+        message_list.append(message_dict)
+
+    return JsonResponse(message_list, safe=False)
 
 def login_view(request):
     if request.method == 'POST':

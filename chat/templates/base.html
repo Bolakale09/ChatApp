@@ -1,5 +1,4 @@
 {% load static %}
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,13 +10,6 @@
     <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}"> <!-- Add this line -->
 </head>
 <body class="bg-gray-100">
-    {% if messages %}
-        <div class="messages">
-            {% for message in messages %}
-                <p class="text-red-500 text-center">{{ message }}</p>
-            {% endfor %}
-        </div>
-    {% endif %}
     {% block content %}
     {% endblock %}
 </body>
