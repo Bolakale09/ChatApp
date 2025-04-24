@@ -10,7 +10,6 @@ from .models import Message, UserProfile
 
 @login_required
 def chat_view(request):
-    # Use select_related for OneToOneField
     users = User.objects.exclude(id=request.user.id).select_related('userprofile')
     messages = Message.objects.filter(
         Q(sender=request.user) | Q(receiver=request.user)

@@ -1,11 +1,98 @@
 // Use dynamic protocol (ws or wss) based on current page protocol
 let protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-let ws = new WebSocket(protocol + '//' + window.location.host + '/ws/chat/');
+let ws = null;
 let currentReceiverId = null;
 let selectedUser = null;
 
+// Initialize WebSocket connection
+function connectWebSocket() {
+    ws = new WebSocket(protocol + '//' + window.location.host + '/ws/chat/');
+
+    ws.onopen = function () {
+        console.log('WebSocket connection established');
+        document.getElementById('send-button').disabled = currentReceiverId === null;
+
+        // Update connection status indicator
+        const connectionStatus = document.getElementById('connection-status');
+        if (connectionStatus) {
+            connectionStatus.className = 'text-green-500 text-xs';
+            connectionStatus.textContent = 'Connected';
+        }
+
+        loadUsers(); // Load initial user statuses
+    };
+
+    ws.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+        if (data.type === 'status_update') {
+            updateUserStatuses(data.users);
+        }
+    };
+
+    ws.onclose = function () {
+        console.error('WebSocket connection closed. Attempting to reconnect...');
+        document.getElementById('send-button').disabled = true;
+
+        // Update connection status indicator
+        const connectionStatus = document.getElementById('connection-status');
+        if (connectionStatus) {
+            connectionStatus.className = 'text-red-500 text-xs';
+            connectionStatus.textContent = 'Disconnected - Reconnecting...';
+        }
+
+        // Try to reconnect after a delay
+        setTimeout(connectWebSocket, 3000);
+    };
+
+    ws.onerror = function (error) {
+        console.error('WebSocket error:', error);
+
+        // Update connection status indicator
+        const connectionStatus = document.getElementById('connection-status');
+        if (connectionStatus) {
+            connectionStatus.className = 'text-red-500 text-xs';
+            connectionStatus.textContent = 'Connection Error';
+        }
+    };
+}
+
+// Update user statuses in the UI
+function updateUserStatuses(users) {
+    users.forEach(user => {
+        const userItem = document.querySelector(`.user-item[data-user-id="${user.id}"]`);
+        if (userItem) {
+            const statusIndicator = userItem.querySelector('.status-indicator');
+            const statusText = userItem.querySelector('.user-status');
+            if (user.is_online) {
+                statusIndicator.classList.remove('offline');
+                statusIndicator.classList.add('online');
+                statusText.textContent = 'Online';
+            } else {
+                statusIndicator.classList.remove('online');
+                statusIndicator.classList.add('offline');
+                statusText.textContent = 'Offline';
+            }
+        }
+
+        // Update receiver status in chat header if selected
+        if (selectedUser && selectedUser.id == user.id) {
+            const receiverStatus = document.getElementById('receiver-status');
+            const receiverStatusText = document.getElementById('receiver-status-text');
+            if (user.is_online) {
+                receiverStatus.classList.remove('offline');
+                receiverStatus.classList.add('online');
+                receiverStatusText.textContent = 'Online';
+            } else {
+                receiverStatus.classList.remove('online');
+                receiverStatus.classList.add('offline');
+                receiverStatusText.textContent = 'Offline';
+            }
+        }
+    });
+}
+
 // Filter users when typing in search
-document.getElementById('user-search').addEventListener('input', function(e) {
+document.getElementById('user-search').addEventListener('input', function (e) {
     const searchTerm = e.target.value.toLowerCase();
     document.querySelectorAll('.user-item').forEach(item => {
         const username = item.getAttribute('data-username').toLowerCase();
@@ -35,6 +122,11 @@ function selectUser(userId, username) {
         }
     });
 
+    // Update profile picture
+    const userItem = document.querySelector(`.user-item[data-user-id="${userId}"]`);
+    const profilePic = userItem.querySelector('img').src;
+    document.getElementById('receiver-profile').src = profilePic;
+
     // Show loading indicator
     const chatMessages = document.getElementById('chat-messages');
     chatMessages.innerHTML = `
@@ -47,7 +139,7 @@ function selectUser(userId, username) {
     `;
 
     // Fetch and display messages for the selected user
-    fetch(`/api/messages/?receiver=${userId}`)
+    fetch(`/get_messages/?receiver=${userId}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -56,7 +148,6 @@ function selectUser(userId, username) {
         })
         .then(data => {
             chatMessages.innerHTML = '';
-            // Get username from data attribute instead of template variable
             const loggedInUser = chatMessages.dataset.username;
 
             if (data.length === 0) {
@@ -75,7 +166,7 @@ function selectUser(userId, username) {
                     ${message.sender !== loggedInUser ? `<img src="${message.sender_profile_picture || '/static/images/profile-icon.png'}" alt="Profile" class="w-8 h-8 rounded-full mr-2 self-end">` : ''}
                     <div class="inline-block p-2 rounded-lg ${message.sender === loggedInUser ? 'bg-green-100' : 'bg-white'}">
                         <p class="text-sm">${message.content}</p>
-                        <p class="text-xs text-gray-500">${new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                        <p class="text-xs text-gray-500">${new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                     </div>
                     ${message.sender === loggedInUser ? `<img src="${message.sender_profile_picture || '/static/images/profile-icon.png'}" alt="Profile" class="w-8 h-8 rounded-full ml-2 self-end">` : ''}
                 `;
@@ -84,7 +175,7 @@ function selectUser(userId, username) {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         })
         .catch(error => {
-            console.error("Error fetching messages:", error);
+            console.error('Error fetching messages:', error);
             chatMessages.innerHTML = `
                 <div class="flex justify-center items-center h-full">
                     <div class="text-center">
@@ -105,11 +196,10 @@ function sendMessage(event) {
     const receiverId = document.getElementById('receiver-id').value;
 
     if (message && receiverId) {
-        // Show sending indicator
+        // Show temporary "sending" message
         const chatMessages = document.getElementById('chat-messages');
-        const tempMessageDiv = document.createElement('div');
         const loggedInUser = chatMessages.dataset.username;
-
+        const tempMessageDiv = document.createElement('div');
         tempMessageDiv.className = 'flex justify-end mb-2';
         tempMessageDiv.innerHTML = `
             <div class="inline-block p-2 rounded-lg bg-green-100 opacity-60">
@@ -121,36 +211,39 @@ function sendMessage(event) {
         chatMessages.appendChild(tempMessageDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
 
-        ws.send(JSON.stringify({
-            'message': message,
-            'receiver_id': receiverId
-        }));
-        messageInput.value = '';
+        // Send message via AJAX
+        fetch('/send_message/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({
+                receiver_id: receiverId,
+                content: message,
+            }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    messageInput.value = '';
+                    selectUser(currentReceiverId, selectedUser.username); // Refresh messages
+                } else {
+                    console.error('Error sending message:', data.error);
+                    tempMessageDiv.remove();
+                    alert('Failed to send message. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error sending message:', error);
+                tempMessageDiv.remove();
+                alert('Failed to send message. Please try again.');
+            });
     }
 }
 
-// Update user status
-function updateUserStatus(username, status) {
-    document.querySelectorAll('.user-item').forEach(item => {
-        if (item.getAttribute('data-username') === username) {
-            const statusIndicator = item.querySelector('.status-indicator');
-            const statusText = item.querySelector('.user-status');
-
-            statusIndicator.className = `status-indicator ${status.toLowerCase()} absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white`;
-            statusText.textContent = status;
-
-            // If this is the selected user, update the header too
-            if (selectedUser && selectedUser.username === username) {
-                document.getElementById('receiver-status').className = `status-indicator ${status.toLowerCase()} absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white`;
-                document.getElementById('receiver-status-text').textContent = status;
-            }
-        }
-    });
-}
-
-// Load users and their status
+// Load users and their status (initial load)
 function loadUsers() {
-    // Show loading indicator for user list
     const userList = document.getElementById('user-list');
     const loadingIndicator = document.createElement('div');
     loadingIndicator.id = 'users-loading';
@@ -173,21 +266,17 @@ function loadUsers() {
             return response.json();
         })
         .then(data => {
-            // Remove loading indicator
             const loadingElem = document.getElementById('users-loading');
             if (loadingElem) {
                 loadingElem.remove();
             }
 
             if (data.users) {
-                data.users.forEach(user => {
-                    updateUserStatus(user.username, user.status);
-                });
+                updateUserStatuses(data.users);
             }
         })
         .catch(error => {
             console.error('Error loading users:', error);
-            // Show error in user list
             const loadingElem = document.getElementById('users-loading');
             if (loadingElem) {
                 loadingElem.innerHTML = `
@@ -200,92 +289,23 @@ function loadUsers() {
         });
 }
 
-// WebSocket connection handlers
-ws.onopen = function() {
-    console.log("WebSocket connection established");
-    document.getElementById('send-button').disabled = currentReceiverId === null;
-
-    // Add connection status indicator
-    const connectionStatus = document.getElementById('connection-status');
-    if (connectionStatus) {
-        connectionStatus.className = 'text-green-500 text-xs';
-        connectionStatus.textContent = 'Connected';
-    }
-
-    loadUsers();
-};
-
-ws.onmessage = function(event) {
-    const data = JSON.parse(event.data);
-    const chatMessages = document.getElementById('chat-messages');
-    // Get username from data attribute instead of template variable
-    const loggedInUser = chatMessages.dataset.username;
-
-    if (data.type === 'user_status') {
-        // Update user status
-        updateUserStatus(data.username, data.status);
-        return;
-    }
-
-    // Handle only messages related to the current conversation
-    if ((data.sender === loggedInUser ||
-        (selectedUser && data.sender === selectedUser.username) ||
-        data.receiver_id === currentReceiverId)) {
-
-        // Remove temporary "sending" message if this is a confirmation of our own message
-        if (data.sender === loggedInUser) {
-            const sendingMessages = chatMessages.querySelectorAll('.opacity-60');
-            if (sendingMessages.length > 0) {
-                sendingMessages[0].parentElement.remove();
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
             }
         }
-
-        const messageDiv = document.createElement('div');
-        messageDiv.className = data.sender === loggedInUser ? 'flex justify-end mb-2' : 'flex justify-start mb-2';
-        messageDiv.innerHTML = `
-            ${data.sender !== loggedInUser ? `<img src="${data.sender_profile_picture || '/static/images/profile-icon.png'}" alt="Profile" class="w-8 h-8 rounded-full mr-2 self-end">` : ''}
-            <div class="inline-block p-2 rounded-lg ${data.sender === loggedInUser ? 'bg-green-100' : 'bg-white'}">
-                <p class="text-sm">${data.message}</p>
-                <p class="text-xs text-gray-500">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-            </div>
-            ${data.sender === loggedInUser ? `<img src="${data.sender_profile_picture || '/static/images/profile-icon.png'}" alt="Profile" class="w-8 h-8 rounded-full ml-2 self-end">` : ''}
-        `;
-        chatMessages.appendChild(messageDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
-};
+    return cookieValue;
+}
 
-ws.onclose = function() {
-    console.error("WebSocket connection closed. Attempting to reconnect...");
-    document.getElementById('send-button').disabled = true;
-
-    // Update connection status indicator
-    const connectionStatus = document.getElementById('connection-status');
-    if (connectionStatus) {
-        connectionStatus.className = 'text-red-500 text-xs';
-        connectionStatus.textContent = 'Disconnected - Reconnecting...';
-    }
-
-    // Try to reconnect after a delay
-    setTimeout(function() {
-        protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        ws = new WebSocket(protocol + '//' + window.location.host + '/ws/chat/');
-    }, 3000);
-};
-
-ws.onerror = function(error) {
-    console.error("WebSocket error:", error);
-
-    // Update connection status indicator
-    const connectionStatus = document.getElementById('connection-status');
-    if (connectionStatus) {
-        connectionStatus.className = 'text-red-500 text-xs';
-        connectionStatus.textContent = 'Connection Error';
-    }
-};
-
-// Configure message input
-document.addEventListener('DOMContentLoaded', function() {
+// Configure message input and initialize WebSocket
+document.addEventListener('DOMContentLoaded', function () {
     const messageInput = document.getElementById('message-input');
 
     // Add connection status indicator to the UI
@@ -296,9 +316,12 @@ document.addEventListener('DOMContentLoaded', function() {
     connectionStatusElement.textContent = 'Connecting...';
     headerElement.appendChild(connectionStatusElement);
 
-    messageInput.onkeyup = function(e) {
+    messageInput.onkeyup = function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             document.getElementById('send-button').click();
         }
     };
+
+    // Initialize WebSocket connection
+    connectWebSocket();
 });
