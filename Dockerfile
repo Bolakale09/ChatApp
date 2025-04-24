@@ -35,5 +35,4 @@ EXPOSE 8000
 
 CMD python manage.py migrate && \
     python create_superuser.py && \
-    python manage.py collectstatic && \
     gunicorn --bind :8000 --workers 1 --worker-class uvicorn.workers.UvicornWorker chatapp.asgi
