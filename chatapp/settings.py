@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
+from email.policy import default
 from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
@@ -60,15 +61,16 @@ INSTALLED_APPS = [
 
 if DEBUG:
     DATABASES = {
-        'default': dj_database_url.config(default=DATABASE_URL)
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / ('db.sqlite3'),
+        }
     }
 else:
     DATABASES = {
-        'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / ('db.sqlite3'),
+        'default': dj_database_url.config(default=DATABASE_URL)
     }
-}
+
 
 
 MIDDLEWARE = [
@@ -109,22 +111,11 @@ TEMPLATES = [
 
 ASGI_APPLICATION = 'chatapp.asgi.application'
 
-if DEBUG:
-    CHANNEL_LAYERS = {
+CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels.layers.InMemoryChannelLayer"
         },
     }
-else:
-    CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
-        },
-    },
-}
-
 
 
 # Password validation
