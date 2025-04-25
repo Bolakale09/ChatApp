@@ -24,3 +24,10 @@ body {
     align-items: center;
     justify-content: center;
 }
+
+.status-indicator.online {
+    background-color: #10b981;
+}
+.status-indicator.offline {
+    background-color: #9ca3af;
+}
