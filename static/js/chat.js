@@ -259,11 +259,14 @@ function handleImageUpload() {
 
     // Connect the upload button to the file input
     imageUploadBtn.addEventListener('click', () => {
+        // Make sure this actually triggers when the button is clicked
+        console.log('Image upload button clicked');
         fileInput.click();
     });
 
     // Handle file selection
     fileInput.addEventListener('change', (e) => {
+        console.log('File input changed', e);
         if (fileInput.files && fileInput.files[0]) {
             const file = fileInput.files[0];
 
@@ -699,7 +702,7 @@ function addStatusStyles() {
     }
 }
 
-// Configure message input and initialize WebSocket
+// Modify the DOMContentLoaded event handler to properly enable the image upload button
 document.addEventListener('DOMContentLoaded', function() {
     // Add styles
     addStatusStyles();
@@ -710,20 +713,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize image upload if we're on the chat page
     const imageUploadBtn = document.getElementById('image-upload-btn');
     if (imageUploadBtn) {
-        handleImageUpload();
-
-        // Enable/disable the image upload button together with the message input
+        // Update the enableChatInput function to properly handle the image upload button
         const enableChatInput = function(enabled) {
             document.getElementById('message-input').disabled = !enabled;
             document.getElementById('send-button').disabled = !enabled;
             document.getElementById('image-upload-btn').disabled = !enabled;
         };
 
-        // Update the selectUser function to also enable the image upload
-        const originalSelectUser = selectUser;
-        selectUser = function(userId, username) {
+        // Ensure image upload is initialized
+        handleImageUpload();
+
+        // Override the selectUser function to also properly enable the image upload button
+        const originalSelectUser = window.selectUser || selectUser;
+        window.selectUser = function(userId, username) {
             originalSelectUser(userId, username);
             enableChatInput(true);
+
+            // Explicitly enable the image upload button when a user is selected
+            document.getElementById('image-upload-btn').disabled = false;
         };
     }
 
