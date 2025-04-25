@@ -61,11 +61,32 @@
         <div class="p-4 bg-white border-t">
             <form id="message-form" onsubmit="sendMessage(event)">
                 <input type="hidden" id="receiver-id">
-                <div class="flex items-center">
-                    <input type="text" id="message-input" class="flex-1 p-3 border rounded-full" placeholder="Type a message" disabled>
-                    <button type="submit" id="send-button" class="bg-green-500 text-white w-12 h-12 rounded-full flex items-center justify-center ml-3 disabled:bg-gray-300" disabled>
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
+                <div class="flex flex-col">
+                    <!-- Image preview area (initially hidden) -->
+                    <div id="image-preview-container" class="mb-2 hidden">
+                        <div class="relative inline-block">
+                            <img id="image-preview" class="max-h-40 rounded border" alt="Preview">
+                            <button type="button" id="remove-image" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <!-- Image upload button -->
+                        <button type="button" id="image-upload-btn" class="bg-gray-200 text-gray-700 w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-300 mr-2 disabled:bg-gray-100 disabled:text-gray-400" disabled>
+                            <i class="fas fa-image"></i>
+                        </button>
+                        <input type="file" id="image-file" accept="image/*" class="hidden">
+                        
+                        <!-- Message input field -->
+                        <input type="text" id="message-input" class="flex-1 p-3 border rounded-full" placeholder="Type a message" disabled>
+                        
+                        <!-- Send button -->
+                        <button type="submit" id="send-button" class="bg-green-500 text-white w-12 h-12 rounded-full flex items-center justify-center ml-3 disabled:bg-gray-300" disabled>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>

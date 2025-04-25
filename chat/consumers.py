@@ -129,16 +129,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def chat_message(self, event):
         try:
             # Send chat message to WebSocket
-            await self.send(text_data=json.dumps({
+            message_data = {
                 'type': 'chat_message',
-                'message': event['message'],
-                'content': event.get('content', event['message']),  # Include both for compatibility
+                'message': event.get('message', ''),
+                'content': event.get('content', event.get('message', '')),
                 'sender': event['sender'],
                 'sender_id': event['sender_id'],
                 'receiver_id': event.get('receiver_id'),
                 'sender_profile_picture': event.get('sender_profile_picture', '/static/images/profile-icon.png'),
                 'timestamp': event.get('timestamp', datetime.now().isoformat())
-            }))
+            }
+
+            # Add image URL if present
+            if 'image_url' in event:
+                message_data['image_url'] = event['image_url']
+
+            await self.send(text_data=json.dumps(message_data))
         except Exception as e:
             print(f"Error in chat_message: {e}")
             await self.send(text_data=json.dumps({
