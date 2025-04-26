@@ -36,6 +36,7 @@ function connectWebSocket() {
 
     ws.onmessage = function(event) {
         try {
+            console.log('Data:'+event.data);
             const data = JSON.parse(event.data);
             const chatMessages = document.getElementById('chat-messages');
             // Get username from data attribute
@@ -151,6 +152,7 @@ document.getElementById('user-search').addEventListener('input', function(e) {
     });
 });
 
+
 function selectUser(userId, username) {
     currentReceiverId = userId;
     selectedUser = {
@@ -259,11 +261,14 @@ function handleImageUpload() {
 
     // Connect the upload button to the file input
     imageUploadBtn.addEventListener('click', () => {
+        // Make sure this actually triggers when the button is clicked
+        console.log('Image upload button clicked');
         fileInput.click();
     });
 
     // Handle file selection
     fileInput.addEventListener('change', (e) => {
+        console.log('File input changed', e);
         if (fileInput.files && fileInput.files[0]) {
             const file = fileInput.files[0];
 
@@ -352,59 +357,98 @@ function sendMessage(event) {
         formData.append('image', selectedImageFile);
     }
 
-    // Send via API rather than WebSocket for file uploads
-    fetch('/api/send_message/', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-        },
-        body: formData,
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
+    const sendWebSocketMessage = (imageBase64 = '') => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            const messageData = {
+                type: 'chat_message',
+                receiver_id: parseInt(receiverId),
+                content: message || '',
+                image_base64: imageBase64
+            };
+            ws.send(JSON.stringify(messageData));
             // Clear inputs
             messageInput.value = '';
             if (selectedImageFile) {
                 document.getElementById('remove-image').click();
             }
-
-            // Remove temporary message
-            tempMessageDiv.remove();
-
-            // Add the confirmed message
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'flex justify-end mb-2';
-
-            let confirmedContent = '';
-            if (data.image_url) {
-                confirmedContent += `<img src="${data.image_url}" class="max-w-xs max-h-60 rounded" alt="Image">`;
-            }
-            if (message) {
-                confirmedContent += `<p class="text-sm mt-1">${message}</p>`;
-            }
-
-            messageDiv.innerHTML = `
-                <div class="inline-block p-2 rounded-lg bg-green-100">
-                    ${confirmedContent}
-                    <p class="text-xs text-gray-500 mt-1">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                </div>
-                <img src="/static/images/profile-icon.png" alt="Profile" class="w-8 h-8 rounded-full ml-2 self-end">
-            `;
-
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
         } else {
-            console.error('Error sending message:', data.error);
+            console.error('WebSocket is not connected');
             tempMessageDiv.remove();
-            showNotification('Failed to send message. Please try again.', 'error');
+            showNotification('Cannot send message: WebSocket disconnected.', 'error');
         }
-    })
-    .catch(error => {
-        console.error('Error sending message:', error);
-        tempMessageDiv.remove();
-        showNotification('Failed to send message. Please try again.', 'error');
-    });
+    };
+
+    // Handle image as base64 if present
+    if (selectedImageFile) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const base64String = e.target.result.split(',')[1]; // Remove data:image/...;base64, prefix
+            sendWebSocketMessage(base64String);
+        };
+        reader.onerror = (e) => {
+            console.error('Error reading image file:'+e.toString());
+            tempMessageDiv.remove();
+            showNotification('Failed to process image. Please try again.', 'error');
+        };
+        reader.readAsDataURL(selectedImageFile);
+    } else {
+        // No image, send text message directly
+        sendWebSocketMessage();
+    }
+
+    // // Send via API rather than WebSocket for file uploads
+    // fetch('/api/send_message/', {
+    //     method: 'POST',
+    //     headers: {
+    //         'X-CSRFToken': getCookie('csrftoken'),
+    //     },
+    //     body: formData,
+    // })
+    // .then(response => response.json())
+    // .then(data => {
+    //     if (data.status === 'success') {
+    //         // Clear inputs
+    //         messageInput.value = '';
+    //         if (selectedImageFile) {
+    //             document.getElementById('remove-image').click();
+    //         }
+    //
+    //         // Remove temporary message
+    //         tempMessageDiv.remove();
+    //
+    //         // Add the confirmed message
+    //         const messageDiv = document.createElement('div');
+    //         messageDiv.className = 'flex justify-end mb-2';
+    //
+    //         let confirmedContent = '';
+    //         if (data.image_url) {
+    //             confirmedContent += `<img src="${data.image_url}" class="max-w-xs max-h-60 rounded" alt="Image">`;
+    //         }
+    //         if (message) {
+    //             confirmedContent += `<p class="text-sm mt-1">${message}</p>`;
+    //         }
+    //
+    //         messageDiv.innerHTML = `
+    //             <div class="inline-block p-2 rounded-lg bg-green-100">
+    //                 ${confirmedContent}
+    //                 <p class="text-xs text-gray-500 mt-1">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+    //             </div>
+    //             <img src="/static/images/profile-icon.png" alt="Profile" class="w-8 h-8 rounded-full ml-2 self-end">
+    //         `;
+    //
+    //         chatMessages.appendChild(messageDiv);
+    //         chatMessages.scrollTop = chatMessages.scrollHeight;
+    //     } else {
+    //         console.error('Error sending message:', data.error);
+    //         tempMessageDiv.remove();
+    //         showNotification('Failed to send message. Please try again.', 'error');
+    //     }
+    // })
+    // .catch(error => {
+    //     console.error('Error sending message:', error);
+    //     tempMessageDiv.remove();
+    //     showNotification('Failed to send message. Please try again.', 'error');
+    // });
 }
 
 // Updated chat message handler to support images
@@ -613,6 +657,7 @@ function showNotification(message, type = 'info') {
 
 // Load users and their status (initial load)
 function loadUsers() {
+    console.log("Loading Users...")
     // WebSocket should now handle this on connect
     // But keep this as a fallback
     const userList = document.getElementById('user-list');
@@ -631,6 +676,7 @@ function loadUsers() {
 
     fetch('/api/users/')
         .then(response => {
+            console.log(response);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -699,7 +745,7 @@ function addStatusStyles() {
     }
 }
 
-// Configure message input and initialize WebSocket
+// Modify the DOMContentLoaded event handler to properly enable the image upload button
 document.addEventListener('DOMContentLoaded', function() {
     // Add styles
     addStatusStyles();
@@ -710,20 +756,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize image upload if we're on the chat page
     const imageUploadBtn = document.getElementById('image-upload-btn');
     if (imageUploadBtn) {
-        handleImageUpload();
-
-        // Enable/disable the image upload button together with the message input
+        // Update the enableChatInput function to properly handle the image upload button
         const enableChatInput = function(enabled) {
             document.getElementById('message-input').disabled = !enabled;
             document.getElementById('send-button').disabled = !enabled;
             document.getElementById('image-upload-btn').disabled = !enabled;
         };
 
-        // Update the selectUser function to also enable the image upload
-        const originalSelectUser = selectUser;
-        selectUser = function(userId, username) {
+        // Ensure image upload is initialized
+        handleImageUpload();
+
+        // Override the selectUser function to also properly enable the image upload button
+        const originalSelectUser = window.selectUser || selectUser;
+        window.selectUser = function(userId, username) {
             originalSelectUser(userId, username);
             enableChatInput(true);
+
+            // Explicitly enable the image upload button when a user is selected
+            document.getElementById('image-upload-btn').disabled = false;
         };
     }
 

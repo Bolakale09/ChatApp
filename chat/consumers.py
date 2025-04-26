@@ -1,6 +1,10 @@
+import base64
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+
 from .models import Message, UserProfile
 from channels.db import database_sync_to_async
 from datetime import datetime
@@ -14,7 +18,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
 
         self.user = self.scope["user"]
-        self.room_name = f'chat_{self.user.id}'
+
+        # Get the user's profile
+        self.user_profile = await self.get_user_profile(self.user.id)
+
+        # Room name uses the UserProfile ID, not the User ID
+        self.room_name = f'chat_{self.user_profile.id}'
 
         # Join user's personal group for chat messages
         await self.channel_layer.group_add(
@@ -60,13 +69,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         try:
             text_data_json = json.loads(text_data)
-            message_type = text_data_json.get('type', 'chat_message')  # Default to chat_message
+            message_type = text_data_json.get('type', 'chat_message')
+
 
             if message_type == 'chat_message':
                 message = text_data_json.get('message', '')
                 receiver_id = text_data_json.get('receiver_id', '')
+                image_url = None
 
-                if not message or not receiver_id:
+                if text_data_json['image_base64']:
+                    # Decode base64 and save image
+                    image_data = base64.b64decode(text_data_json['image_base64'])
+                    image_file = ContentFile(image_data, name='image.jpg')
+                    path = default_storage.save(f'media/images/image.jpg', image_file)
+                    image_url = default_storage.url(path)
+
+                if (not message and not image_url) or not receiver_id:
                     await self.send(text_data=json.dumps({
                         'type': 'error',
                         'error': 'Message or receiver_id missing'
@@ -74,16 +92,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     return
 
                 # Save the message in the database
-                saved_message = await self.save_message(message, receiver_id)
+                saved_message = await self.save_message(message,image_url, receiver_id)
 
                 # Format timestamp for frontend
                 timestamp = saved_message.timestamp.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
-                # Get profile picture URL if available
-                sender_profile = await self.get_profile_picture(self.user.id)
-                receiver_profile = await self.get_profile_picture(receiver_id)
+                # Get sender's user profile
+                sender_profile_pic = await self.get_profile_picture_url(self.user_profile)
 
-                # Send to receiver's group
+                # Send to receiver's group - using UserProfile ID for the room
                 receiver_room = f'chat_{receiver_id}'
                 await self.channel_layer.group_send(
                     receiver_room,
@@ -92,10 +109,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         'message': message,
                         'content': message,  # Include both for compatibility
                         'sender': self.user.username,
-                        'sender_id': self.user.id,
+                        'sender_id': self.user_profile.id,  # Send profile ID, not user ID
                         'receiver_id': receiver_id,
-                        'sender_profile_picture': sender_profile,
-                        'timestamp': timestamp
+                        'sender_profile_picture': sender_profile_pic,
+                        'timestamp': timestamp,
+                        'image_url': image_url
                     }
                 )
 
@@ -105,10 +123,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     'message': message,
                     'content': message,  # Include both for compatibility
                     'sender': self.user.username,
-                    'sender_id': self.user.id,
+                    'sender_id': self.user_profile.id,  # Send profile ID, not user ID
                     'receiver_id': receiver_id,
-                    'sender_profile_picture': sender_profile,
-                    'timestamp': timestamp
+                    'sender_profile_picture': sender_profile_pic,
+                    'timestamp': timestamp,
+                    'image_url': image_url
                 }))
             elif message_type == 'ping':
                 # Handle ping request for keeping connection alive
@@ -167,39 +186,45 @@ class ChatConsumer(AsyncWebsocketConsumer):
             }))
 
     @database_sync_to_async
-    def save_message(self, message, receiver_id):
+    def get_user_profile(self, user_id):
+        """Get the UserProfile instance for a User ID"""
+        user = User.objects.get(id=user_id)
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        return profile
+
+    @database_sync_to_async
+    def save_message(self, message,image_url, receiver_id):
         try:
-            receiver = User.objects.get(id=receiver_id)
+            # Get the receiver's UserProfile
+            receiver_profile = UserProfile.objects.get(id=receiver_id)
+            # Get the sender's UserProfile (which we've already stored)
+            sender_profile = self.user_profile
+
+            # Create message using the correct model fields
             return Message.objects.create(
-                sender=self.user,
-                receiver=receiver,
-                content=message
+                sender=sender_profile,
+                receiver=receiver_profile,
+                content=message,
+                image_url=image_url
             )
-        except User.DoesNotExist:
+        except UserProfile.DoesNotExist:
             raise ValueError(f"Receiver with ID {receiver_id} does not exist")
         except Exception as e:
             raise Exception(f"Failed to save message: {str(e)}")
 
     @database_sync_to_async
-    def get_profile_picture(self, user_id):
-        try:
-            user = User.objects.get(id=user_id)
-            profile = UserProfile.objects.filter(user=user).first()
-            if profile and profile.profile_picture:
-                return profile.profile_picture.url
-            return '/static/images/profile-icon.png'
-        except Exception:
-            return '/static/images/profile-icon.png'
+    def get_profile_picture_url(self, user_profile):
+        """Get profile picture URL from a UserProfile instance"""
+        if user_profile.profile_picture:
+            return user_profile.profile_picture.url
+        return '/static/images/profile-icon.png'
 
     @database_sync_to_async
     def set_online_status(self, is_online):
         try:
-            user_profile = UserProfile.objects.get(user=self.user)
-            user_profile.is_online = is_online
-            user_profile.save()
-        except UserProfile.DoesNotExist:
-            # Create profile if it doesn't exist
-            UserProfile.objects.create(user=self.user, is_online=is_online)
+            # We already have the user_profile
+            self.user_profile.is_online = is_online
+            self.user_profile.save()
         except Exception as e:
             print(f"Error setting online status: {e}")
 
@@ -222,23 +247,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_all_users(self):
-        users = User.objects.exclude(id=self.user.id).select_related('userprofile')
+        # Get all UserProfile objects instead of Users
+        profiles = UserProfile.objects.exclude(user=self.user).select_related('user')
         return [
             {
-                "id": user.id,
-                "username": user.username,
-                "is_online": hasattr(user, 'userprofile') and user.userprofile.is_online,
-                "profile_picture": self.get_profile_picture_sync(user)
+                "id": profile.id,  # Use UserProfile ID
+                "username": profile.user.username,
+                "is_online": profile.is_online,
+                "profile_picture": profile.profile_picture.url if profile.profile_picture else '/static/images/profile-icon.png'
             }
-            for user in users
+            for profile in profiles
         ]
-
-    def get_profile_picture_sync(self, user):
-        try:
-            profile = UserProfile.objects.filter(user=user).first()
-            if profile and profile.profile_picture:
-                return profile.profile_picture.url
-            return '/static/images/profile-icon.png'
-        except Exception:
-            return '/static/images/profile-icon.png'
-

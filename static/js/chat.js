@@ -2,6 +2,7 @@
 let protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 let ws;
 let currentReceiverId = null;
+let currentUsername = null;
 let selectedUser = null;
 let pingInterval = null;
 let reconnectAttempts = 0;
@@ -36,6 +37,7 @@ function connectWebSocket() {
 
     ws.onmessage = function(event) {
         try {
+            console.log('Data:'+event.data);
             const data = JSON.parse(event.data);
             const chatMessages = document.getElementById('chat-messages');
             // Get username from data attribute
@@ -151,8 +153,10 @@ document.getElementById('user-search').addEventListener('input', function(e) {
     });
 });
 
+
 function selectUser(userId, username) {
     currentReceiverId = userId;
+    currentUsername = username;
     selectedUser = {
         id: userId,
         username: username
@@ -207,6 +211,7 @@ function selectUser(userId, username) {
             return response.json();
         })
         .then(data => {
+            console.log('Response Data:'+ JSON.stringify(data));
             chatMessages.innerHTML = '';
             const loggedInUser = chatMessages.dataset.username;
 
@@ -219,19 +224,38 @@ function selectUser(userId, username) {
                 return;
             }
 
-            data.forEach(message => {
-                const messageDiv = document.createElement('div');
-                messageDiv.className = message.sender === loggedInUser ? 'flex justify-end mb-2' : 'flex justify-start mb-2';
-                messageDiv.innerHTML = `
-                    ${message.sender !== loggedInUser ? `<img src="${message.sender_profile_picture || '/static/images/profile-icon.png'}" alt="Profile" class="w-8 h-8 rounded-full mr-2 self-end">` : ''}
-                    <div class="inline-block p-2 rounded-lg ${message.sender === loggedInUser ? 'bg-green-100' : 'bg-white'}">
-                        <p class="text-sm">${message.content}</p>
-                        <p class="text-xs text-gray-500">${new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                    </div>
-                    ${message.sender === loggedInUser ? `<img src="${message.sender_profile_picture || '/static/images/profile-icon.png'}" alt="Profile" class="w-8 h-8 rounded-full ml-2 self-end">` : ''}
-                `;
-                chatMessages.appendChild(messageDiv);
-            });
+   data.forEach(message => {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = message.sender === loggedInUser
+        ? 'flex justify-end mb-3 px-3'
+        : 'flex justify-start mb-3 px-3';
+
+    // Build message content with image and/or text
+    let contentHtml = '';
+    if (message.image_url) {
+        contentHtml += `
+            <img src="${message.image_url}" width="350" alt="Uploaded Image" 
+                 class="w-[60px] h-auto rounded-lg shadow-sm object-cover mb-1">
+        `;
+    }
+    if (message.content) {
+        contentHtml += `<p class="text-sm leading-relaxed">${message.content}</p>`;
+    }
+
+    // Format timestamp
+    const timestamp = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    messageDiv.innerHTML = `
+        <div class="inline-block p-3 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md 
+                    ${message.sender === loggedInUser ? 'bg-green-100' : 'bg-white'}">
+            ${contentHtml}
+            <p class="text-xs text-gray-500 mt-1 text-${message.sender === loggedInUser ? 'right' : 'left'}">
+                ${timestamp}
+            </p>
+        </div>
+    `;
+    chatMessages.appendChild(messageDiv);
+});
             chatMessages.scrollTop = chatMessages.scrollHeight;
         })
         .catch(error => {
@@ -355,59 +379,102 @@ function sendMessage(event) {
         formData.append('image', selectedImageFile);
     }
 
-    // Send via API rather than WebSocket for file uploads
-    fetch('/api/send_message/', {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
-        },
-        body: formData,
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
+    const sendWebSocketMessage = (imageBase64 = '') => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            const messageData = {
+                type: 'chat_message',
+                receiver_id: parseInt(receiverId),
+                message: message || '',
+                image_base64: imageBase64
+            };
+
+            console.log(messageData);
+            ws.send(JSON.stringify(messageData));
             // Clear inputs
             messageInput.value = '';
             if (selectedImageFile) {
                 document.getElementById('remove-image').click();
             }
 
-            // Remove temporary message
-            tempMessageDiv.remove();
-
-            // Add the confirmed message
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'flex justify-end mb-2';
-
-            let confirmedContent = '';
-            if (data.image_url) {
-                confirmedContent += `<img src="${data.image_url}" class="max-w-xs max-h-60 rounded" alt="Image">`;
-            }
-            if (message) {
-                confirmedContent += `<p class="text-sm mt-1">${message}</p>`;
-            }
-
-            messageDiv.innerHTML = `
-                <div class="inline-block p-2 rounded-lg bg-green-100">
-                    ${confirmedContent}
-                    <p class="text-xs text-gray-500 mt-1">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-                </div>
-                <img src="/static/images/profile-icon.png" alt="Profile" class="w-8 h-8 rounded-full ml-2 self-end">
-            `;
-
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            selectUser(currentReceiverId, currentUsername);
         } else {
-            console.error('Error sending message:', data.error);
+            console.error('WebSocket is not connected');
             tempMessageDiv.remove();
-            showNotification('Failed to send message. Please try again.', 'error');
+            showNotification('Cannot send message: WebSocket disconnected.', 'error');
         }
-    })
-    .catch(error => {
-        console.error('Error sending message:', error);
-        tempMessageDiv.remove();
-        showNotification('Failed to send message. Please try again.', 'error');
-    });
+    };
+
+    // Handle image as base64 if present
+    if (selectedImageFile) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const base64String = e.target.result.split(',')[1]; // Remove data:image/...;base64, prefix
+            sendWebSocketMessage(base64String);
+        };
+        reader.onerror = (e) => {
+            console.error('Error reading image file:'+e.toString());
+            tempMessageDiv.remove();
+            showNotification('Failed to process image. Please try again.', 'error');
+        };
+        reader.readAsDataURL(selectedImageFile);
+    } else {
+        // No image, send text message directly
+        sendWebSocketMessage();
+    }
+
+    // // Send via API rather than WebSocket for file uploads
+    // fetch('/api/send_message/', {
+    //     method: 'POST',
+    //     headers: {
+    //         'X-CSRFToken': getCookie('csrftoken'),
+    //     },
+    //     body: formData,
+    // })
+    // .then(response => response.json())
+    // .then(data => {
+    //     if (data.status === 'success') {
+    //         // Clear inputs
+    //         messageInput.value = '';
+    //         if (selectedImageFile) {
+    //             document.getElementById('remove-image').click();
+    //         }
+    //
+    //         // Remove temporary message
+    //         tempMessageDiv.remove();
+    //
+    //         // Add the confirmed message
+    //         const messageDiv = document.createElement('div');
+    //         messageDiv.className = 'flex justify-end mb-2';
+    //
+    //         let confirmedContent = '';
+    //         if (data.image_url) {
+    //             confirmedContent += `<img src="${data.image_url}" class="max-w-xs max-h-60 rounded" alt="Image">`;
+    //         }
+    //         if (message) {
+    //             confirmedContent += `<p class="text-sm mt-1">${message}</p>`;
+    //         }
+    //
+    //         messageDiv.innerHTML = `
+    //             <div class="inline-block p-2 rounded-lg bg-green-100">
+    //                 ${confirmedContent}
+    //                 <p class="text-xs text-gray-500 mt-1">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+    //             </div>
+    //             <img src="/static/images/profile-icon.png" alt="Profile" class="w-8 h-8 rounded-full ml-2 self-end">
+    //         `;
+    //
+    //         chatMessages.appendChild(messageDiv);
+    //         chatMessages.scrollTop = chatMessages.scrollHeight;
+    //     } else {
+    //         console.error('Error sending message:', data.error);
+    //         tempMessageDiv.remove();
+    //         showNotification('Failed to send message. Please try again.', 'error');
+    //     }
+    // })
+    // .catch(error => {
+    //     console.error('Error sending message:', error);
+    //     tempMessageDiv.remove();
+    //     showNotification('Failed to send message. Please try again.', 'error');
+    // });
 }
 
 // Updated chat message handler to support images
@@ -616,6 +683,7 @@ function showNotification(message, type = 'info') {
 
 // Load users and their status (initial load)
 function loadUsers() {
+    console.log("Loading Users...")
     // WebSocket should now handle this on connect
     // But keep this as a fallback
     const userList = document.getElementById('user-list');
@@ -634,6 +702,7 @@ function loadUsers() {
 
     fetch('/api/users/')
         .then(response => {
+            console.log(response);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }

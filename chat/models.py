@@ -10,16 +10,19 @@ class UserProfile(models.Model):
     def __str__(self):
         return self.user.username
 
+    class Meta:
+        db_table = 'chat_userprofile'
+
 
 class Message(models.Model):
-    sender = models.ForeignKey(User, related_name='sent_messages', on_delete=models.CASCADE)
-    receiver = models.ForeignKey(User, related_name='received_messages', on_delete=models.CASCADE)
+    sender = models.ForeignKey(UserProfile, related_name='sent_messages', on_delete=models.CASCADE)
+    receiver = models.ForeignKey(UserProfile, related_name='received_messages', on_delete=models.CASCADE)
     content = models.TextField()
-    image = models.ImageField(upload_to='chat_images/', blank=True, null=True)  # Add image field
+    image_url = models.CharField(blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ['timestamp']
 
     def __str__(self):
-        return f"{self.sender.username} to {self.receiver.username} at {self.timestamp}"
+        return f"{self.sender.user.username} to {self.receiver.user.username} at {self.timestamp}"
