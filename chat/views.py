@@ -64,8 +64,7 @@ def get_messages(request):
             'content': message.content,
             'timestamp': message.timestamp.isoformat(),
             'sender': message.sender.user.username,
-            'image_url': message.image_url,
-            'sender_profile_picture': message.sender.profile_picture.url if message.sender.profile_picture else None,
+            'image_url': message.image_url if message.image_url else None,
         }
 
         message_list.append(message_dict)

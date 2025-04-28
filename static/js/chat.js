@@ -203,7 +203,7 @@ function selectUser(userId, username) {
     `;
 
     // Fetch and display messages for the selected user
-    fetch(`/api/messages/${userId}/`)
+    fetch(`/api/messages/?receiver=${userId}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -412,7 +412,7 @@ function sendMessage(event) {
             sendWebSocketMessage(base64String);
         };
         reader.onerror = (e) => {
-            console.error('Error reading image file:'+e.toString());
+            console.error('Error reading image file:' + e.toString());
             tempMessageDiv.remove();
             showNotification('Failed to process image. Please try again.', 'error');
         };
@@ -421,62 +421,7 @@ function sendMessage(event) {
         // No image, send text message directly
         sendWebSocketMessage();
     }
-
-    // // Send via API rather than WebSocket for file uploads
-    // fetch('/api/send_message/', {
-    //     method: 'POST',
-    //     headers: {
-    //         'X-CSRFToken': getCookie('csrftoken'),
-    //     },
-    //     body: formData,
-    // })
-    // .then(response => response.json())
-    // .then(data => {
-    //     if (data.status === 'success') {
-    //         // Clear inputs
-    //         messageInput.value = '';
-    //         if (selectedImageFile) {
-    //             document.getElementById('remove-image').click();
-    //         }
-    //
-    //         // Remove temporary message
-    //         tempMessageDiv.remove();
-    //
-    //         // Add the confirmed message
-    //         const messageDiv = document.createElement('div');
-    //         messageDiv.className = 'flex justify-end mb-2';
-    //
-    //         let confirmedContent = '';
-    //         if (data.image_url) {
-    //             confirmedContent += `<img src="${data.image_url}" class="max-w-xs max-h-60 rounded" alt="Image">`;
-    //         }
-    //         if (message) {
-    //             confirmedContent += `<p class="text-sm mt-1">${message}</p>`;
-    //         }
-    //
-    //         messageDiv.innerHTML = `
-    //             <div class="inline-block p-2 rounded-lg bg-green-100">
-    //                 ${confirmedContent}
-    //                 <p class="text-xs text-gray-500 mt-1">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-    //             </div>
-    //             <img src="/static/images/profile-icon.png" alt="Profile" class="w-8 h-8 rounded-full ml-2 self-end">
-    //         `;
-    //
-    //         chatMessages.appendChild(messageDiv);
-    //         chatMessages.scrollTop = chatMessages.scrollHeight;
-    //     } else {
-    //         console.error('Error sending message:', data.error);
-    //         tempMessageDiv.remove();
-    //         showNotification('Failed to send message. Please try again.', 'error');
-    //     }
-    // })
-    // .catch(error => {
-    //     console.error('Error sending message:', error);
-    //     tempMessageDiv.remove();
-    //     showNotification('Failed to send message. Please try again.', 'error');
-    // });
 }
-
 // Updated chat message handler to support images
 function onChatMessage(data, loggedInUser, chatMessages) {
     // Remove temporary "sending" message if this is a confirmation of our own message
@@ -522,65 +467,78 @@ function updateUserStatuses(users) {
     const userList = document.getElementById('user-list');
     if (!userList) return;
 
-    const receiverId = document.getElementById('receiver-id').value;
+    // First, clear all existing users to prevent duplicates
+    // Store currently selected user ID if any
+    const selectedUserId = document.querySelector('.user-item.bg-gray-200')?.getAttribute('data-user-id');
 
-    // Update existing users and add new ones
+    // Remove all user items
+    while (userList.firstChild) {
+        if (userList.firstChild.id !== 'users-loading') {
+            userList.removeChild(userList.firstChild);
+        } else if (userList.firstChild.id === 'users-loading' && users.length > 0) {
+            // Only remove loading indicator if we have users
+            userList.removeChild(userList.firstChild);
+        }
+    }
+
+    // Add all users fresh (no duplicates possible)
+    const addedUsernames = new Set(); // Track usernames to prevent duplicates
+
     users.forEach((user) => {
-        let userItem = userList.querySelector(`.user-item[data-user-id="${user.id}"]`);
-
-        if (userItem) {
-            // Update existing user
-            const statusIndicator = userItem.querySelector('.status-indicator');
-            const statusText = userItem.querySelector('.user-status');
-
-            if (user.is_online) {
-                statusIndicator.classList.remove('offline');
-                statusIndicator.classList.add('online');
-                statusText.textContent = 'Online';
-            } else {
-                statusIndicator.classList.remove('online');
-                statusIndicator.classList.add('offline');
-                statusText.textContent = 'Offline';
-            }
-
-            // Update profile picture if provided
-            if (user.profile_picture) {
-                const profileImg = userItem.querySelector('img');
-                if (profileImg) {
-                    profileImg.src = user.profile_picture;
-                }
-            }
-        } else {
-            // Create new user item if it doesn't exist
-            createUserItem(userList, user);
+        // Skip if we've already added this username
+        if (addedUsernames.has(user.username)) {
+            return;
         }
 
-        // Update receiver status in chat header if this is the selected user
-        if (receiverId && parseInt(receiverId) === user.id) {
-            const receiverStatus = document.getElementById('receiver-status');
-            const receiverStatusText = document.getElementById('receiver-status-text');
-            if (user.is_online) {
-                receiverStatus.classList.remove('offline');
-                receiverStatus.classList.add('online');
-                receiverStatusText.textContent = 'Online';
-            } else {
-                receiverStatus.classList.remove('online');
-                receiverStatus.classList.add('offline');
-                receiverStatusText.textContent = 'Offline';
-            }
-
-            // Update profile picture if provided
-            if (user.profile_picture) {
-                const receiverProfileImg = document.getElementById('receiver-profile');
-                if (receiverProfileImg) {
-                    receiverProfileImg.src = user.profile_picture;
-                }
-            }
-        }
+        addedUsernames.add(user.username);
+        createUserItem(userList, user);
     });
+
+    // Re-highlight selected user if any
+    if (selectedUserId) {
+        const selectedItem = userList.querySelector(`.user-item[data-user-id="${selectedUserId}"]`);
+        if (selectedItem) {
+            selectedItem.classList.add('bg-gray-200');
+        }
+    }
 
     // Sort users: online first, then alphabetically
     sortUserList(userList);
+
+    // Update receiver status in chat header if needed
+    const receiverId = document.getElementById('receiver-id').value;
+    if (receiverId) {
+        const matchingUser = users.find(u => u.id.toString() === receiverId);
+        if (matchingUser) {
+            updateReceiverStatus(matchingUser);
+        }
+    }
+}
+
+// Helper function to update receiver status in header
+function updateReceiverStatus(user) {
+    const receiverStatus = document.getElementById('receiver-status');
+    const receiverStatusText = document.getElementById('receiver-status-text');
+
+    if (receiverStatus && receiverStatusText) {
+        if (user.is_online) {
+            receiverStatus.classList.remove('offline');
+            receiverStatus.classList.add('online');
+            receiverStatusText.textContent = 'Online';
+        } else {
+            receiverStatus.classList.remove('online');
+            receiverStatus.classList.add('offline');
+            receiverStatusText.textContent = 'Offline';
+        }
+
+        // Update profile picture if provided
+        if (user.profile_picture) {
+            const receiverProfileImg = document.getElementById('receiver-profile');
+            if (receiverProfileImg) {
+                receiverProfileImg.src = user.profile_picture;
+            }
+        }
+    }
 }
 
 // Create a new user item in the list
@@ -732,20 +690,20 @@ function loadUsers() {
         });
 }
 
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
+// function getCookie(name) {
+//     let cookieValue = null;
+//     if (document.cookie && document.cookie !== '') {
+//         const cookies = document.cookie.split(';');
+//         for (let i = 0; i < cookies.length; i++) {
+//             const cookie = cookies[i].trim();
+//             if (cookie.substring(0, name.length + 1) === (name + '=')) {
+//                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+//                 break;
+//             }
+//         }
+//     }
+//     return cookieValue;
+// }
 
 // Add styles for status indicators
 function addStatusStyles() {
