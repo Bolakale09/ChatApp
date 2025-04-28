@@ -203,7 +203,7 @@ function selectUser(userId, username) {
     `;
 
     // Fetch and display messages for the selected user
-    fetch(`/api/messages/?receiver=${userId}`)
+    fetch(`/api/messages/${userId}/`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
