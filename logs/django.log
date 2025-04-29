@@ -1,0 +1,240 @@
+INFO 2025-04-29 08:44:27,268 autoreload 940 5052 Watching for file changes with StatReloader
+INFO 2025-04-29 08:46:13,687 autoreload 8264 6972 Watching for file changes with StatReloader
+INFO 2025-04-29 08:49:17,404 autoreload 9636 6620 Watching for file changes with StatReloader
+INFO 2025-04-29 08:52:05,530 autoreload 6000 10576 Watching for file changes with StatReloader
+ERROR 2025-04-29 09:48:52,995 log 12748 9708 Internal Server Error: /
+Traceback (most recent call last):
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 130, in __call__
+    return self._postprocess(request, response, toolbar)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 172, in _postprocess
+    rendered = toolbar.render_toolbar()
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\toolbar.py", line 96, in render_toolbar
+    return render_to_string("debug_toolbar/base.html", context)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: debug_toolbar/base.html
+ERROR 2025-04-29 09:48:55,722 log 12748 5804 Internal Server Error: /favicon.ico
+Traceback (most recent call last):
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 130, in __call__
+    return self._postprocess(request, response, toolbar)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 172, in _postprocess
+    rendered = toolbar.render_toolbar()
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\toolbar.py", line 96, in render_toolbar
+    return render_to_string("debug_toolbar/base.html", context)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: debug_toolbar/base.html
+ERROR 2025-04-29 10:00:22,087 log 10904 8956 Internal Server Error: /
+Traceback (most recent call last):
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 130, in __call__
+    return self._postprocess(request, response, toolbar)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 172, in _postprocess
+    rendered = toolbar.render_toolbar()
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\toolbar.py", line 96, in render_toolbar
+    return render_to_string("debug_toolbar/base.html", context)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: debug_toolbar/base.html
+ERROR 2025-04-29 10:00:22,447 log 10904 5084 Internal Server Error: /favicon.ico
+Traceback (most recent call last):
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 130, in __call__
+    return self._postprocess(request, response, toolbar)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 172, in _postprocess
+    rendered = toolbar.render_toolbar()
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\toolbar.py", line 96, in render_toolbar
+    return render_to_string("debug_toolbar/base.html", context)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: debug_toolbar/base.html
+ERROR 2025-04-29 10:06:45,983 log 5260 1336 Internal Server Error: /
+Traceback (most recent call last):
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 130, in __call__
+    return self._postprocess(request, response, toolbar)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 172, in _postprocess
+    rendered = toolbar.render_toolbar()
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\toolbar.py", line 96, in render_toolbar
+    return render_to_string("debug_toolbar/base.html", context)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: debug_toolbar/base.html
+ERROR 2025-04-29 10:06:46,390 log 5260 5932 Internal Server Error: /favicon.ico
+Traceback (most recent call last):
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 130, in __call__
+    return self._postprocess(request, response, toolbar)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 172, in _postprocess
+    rendered = toolbar.render_toolbar()
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\toolbar.py", line 96, in render_toolbar
+    return render_to_string("debug_toolbar/base.html", context)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: debug_toolbar/base.html
+ERROR 2025-04-29 10:06:57,432 log 5260 3900 Internal Server Error: /
+Traceback (most recent call last):
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 130, in __call__
+    return self._postprocess(request, response, toolbar)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 172, in _postprocess
+    rendered = toolbar.render_toolbar()
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\toolbar.py", line 96, in render_toolbar
+    return render_to_string("debug_toolbar/base.html", context)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: debug_toolbar/base.html
+ERROR 2025-04-29 10:06:57,732 log 5260 11236 Internal Server Error: /favicon.ico
+Traceback (most recent call last):
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 130, in __call__
+    return self._postprocess(request, response, toolbar)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\middleware.py", line 172, in _postprocess
+    rendered = toolbar.render_toolbar()
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\debug_toolbar\toolbar.py", line 96, in render_toolbar
+    return render_to_string("debug_toolbar/base.html", context)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: debug_toolbar/base.html
+WARNING 2025-04-29 10:11:57,106 log 6444 8960 Not Found: /static/css/styles.css
+WARNING 2025-04-29 10:12:18,954 log 6444 8960 Not Found: /static/css/styles.css
+WARNING 2025-04-29 10:12:22,048 log 6444 8960 Not Found: /static/css/styles.css
+WARNING 2025-04-29 10:12:34,431 log 6444 8960 Not Found: /static/css/styles.css
+WARNING 2025-04-29 10:12:41,218 log 6444 8960 Not Found: /static/css/styles.css
+WARNING 2025-04-29 10:12:59,934 log 6444 8960 Not Found: /static/css/styles.css
+WARNING 2025-04-29 10:25:29,934 log 9284 11808 Not Found: /static/css/styles.css
+WARNING 2025-04-29 10:25:45,811 log 9284 11808 Not Found: /media/media/images/image_TTFxahF.jpg
+WARNING 2025-04-29 10:25:45,871 log 9284 6252 Not Found: /media/media/images/image_nLJckHc.jpg
+WARNING 2025-04-29 10:25:45,872 log 9284 11808 Not Found: /media/media/images/image_wtJcXjW.jpg
+WARNING 2025-04-29 10:25:56,161 log 9284 6252 Not Found: /media/media/images/image_TTFxahF.jpg
+WARNING 2025-04-29 10:25:56,161 log 9284 11808 Not Found: /media/media/images/image_nLJckHc.jpg
+WARNING 2025-04-29 10:25:56,162 log 9284 6252 Not Found: /media/media/images/image_wtJcXjW.jpg
+WARNING 2025-04-29 10:29:13,686 log 12152 9668 Not Found: /static/css/styles.css
+WARNING 2025-04-29 10:29:27,911 log 12152 9668 Not Found: /static/css/styles.css
+ERROR 2025-04-29 10:30:21,651 log 12152 9668 Internal Server Error: /login/
+Traceback (most recent call last):
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\utils\module_loading.py", line 30, in import_string
+    return cached_import(module_path, class_name)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\utils\module_loading.py", line 16, in cached_import
+    return getattr(module, class_name)
+AttributeError: module 'redis.connection' has no attribute 'HiredisParser'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\core\handlers\exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\asgiref\sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\core\handlers\base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+        request, *callback_args, **callback_kwargs
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\asgiref\sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\asgiref\current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\asgiref\sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+  File "C:\Users\Bolakale\Documents\chatapp\chat\views.py", line 81, in login_view
+    login(request, user)
+    ~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\contrib\auth\__init__.py", line 187, in login
+    request.session.cycle_key()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\contrib\sessions\backends\base.py", line 432, in cycle_key
+    self.create()
+    ~~~~~~~~~~~^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\contrib\sessions\backends\cache.py", line 55, in create
+    self._session_key = self._get_new_session_key()
+                        ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\contrib\sessions\backends\base.py", line 196, in _get_new_session_key
+    if not self.exists(session_key):
+           ~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\contrib\sessions\backends\cache.py", line 117, in exists
+    bool(session_key) and (self.cache_key_prefix + session_key) in self._cache
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\core\cache\backends\base.py", line 301, in __contains__
+    return self.has_key(key)
+           ~~~~~~~~~~~~^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django_redis\cache.py", line 29, in _decorator
+    return method(self, *args, **kwargs)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django_redis\cache.py", line 138, in has_key
+    return self.client.has_key(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django_redis\client\default.py", line 664, in has_key
+    client = self.get_client(write=False)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django_redis\client\default.py", line 105, in get_client
+    self._clients[index] = self.connect(index)
+                           ~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django_redis\client\default.py", line 118, in connect
+    return self.connection_factory.connect(self._server[index])
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django_redis\pool.py", line 70, in connect
+    params = self.make_connection_params(url)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django_redis\pool.py", line 42, in make_connection_params
+    "parser_class": self.get_parser_cls(),
+                    ~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django_redis\pool.py", line 99, in get_parser_cls
+    return import_string(cls)
+  File "C:\Users\Bolakale\Desktop\chat_app\venv\Lib\site-packages\django\utils\module_loading.py", line 32, in import_string
+    raise ImportError(
+    ...<2 lines>...
+    ) from err
+ImportError: Module "redis.connection" does not define a "HiredisParser" attribute/class
+WARNING 2025-04-29 10:48:51,088 log 11296 10828 Not Found: /static/css/styles.css
+WARNING 2025-04-29 10:53:11,359 log 10060 6644 Not Found: /static/css/styles.css
+WARNING 2025-04-29 10:53:49,355 log 10060 6644 Not Found: /static/css/styles.css
+WARNING 2025-04-29 11:05:32,841 log 13968 13748 Not Found: /static/css/styles.css
+WARNING 2025-04-29 11:05:43,066 log 13968 13748 Not Found: /static/css/styles.css
+WARNING 2025-04-29 11:07:32,307 log 13968 13748 Not Found: /static/css/styles.css
+WARNING 2025-04-29 11:07:51,972 log 13968 9068 Not Found: /media/media/images/image_TTFxahF.jpg
+WARNING 2025-04-29 11:07:51,989 log 13968 1444 Not Found: /media/media/images/image_nLJckHc.jpg
+WARNING 2025-04-29 11:07:51,990 log 13968 13748 Not Found: /media/media/images/image_wtJcXjW.jpg
+WARNING 2025-04-29 11:07:56,062 log 13968 1444 Not Found: /media/media/images/image_nLJckHc.jpg
+WARNING 2025-04-29 11:07:56,091 log 13968 13748 Not Found: /media/media/images/image_TTFxahF.jpg
+WARNING 2025-04-29 11:07:56,091 log 13968 9068 Not Found: /media/media/images/image_wtJcXjW.jpg
+WARNING 2025-04-29 11:08:09,541 log 13968 1444 Not Found: /media/media/images/image_TTFxahF.jpg
+WARNING 2025-04-29 11:08:09,555 log 13968 9068 Not Found: /media/media/images/image_wtJcXjW.jpg
+WARNING 2025-04-29 11:08:09,563 log 13968 13748 Not Found: /media/media/images/image_nLJckHc.jpg

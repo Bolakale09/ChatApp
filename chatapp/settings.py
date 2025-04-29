@@ -10,42 +10,41 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
-from email.policy import default
 from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
-from django.template.context_processors import static
 from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR: Path = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-
+# Load environment variables
 load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY")
 
-DATABASE_URL = config('DATABASE_URL', default='postgres://avnadmin:AVNS_RqbTnyzhEWPm8uiBGTT@chatapp-chat111.d.aivencloud.com:28686/defaultdb?sslmode=require')
+# SECURITY SETTINGS
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("No SECRET_KEY set in environment variables")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config('DEBUG', default=False, cast=bool)
+
+# Import debug_toolbar conditionally
+debug_toolbar_path = None
+if DEBUG:
+    try:
+        import debug_toolbar
+        debug_toolbar_path = os.path.join(os.path.dirname(debug_toolbar.__file__), 'templates')
+    except ImportError:
+        pass
 
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
 
+# CSRF and Security Settings
 CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='').split(',')
-CSRF_COOKIE_SECURE = True
-CSRF_TRUSTED_ORIGINS = [
-    'https://chatapp-swfkkg.fly.dev',
-    # 'www.chatapp-swfkkg.fly.dev',
-    'http://localhost:8000',  # For local development
-]
-# Application definition
 
+# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -55,50 +54,73 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'chat',
     'channels',
-    # 'debug_toolbar',
+    'django_extensions',
 ]
 
+# Add debug toolbar if in DEBUG mode and package is installed
+if DEBUG:
+    try:
+        import debug_toolbar
+        INSTALLED_APPS.append('debug_toolbar')
+    except ImportError:
+        pass
 
-if not DEBUG:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / ('db.sqlite3'),
-        }
-    }
+# Different security settings based on DEBUG mode
+if DEBUG:
+    # Development settings (localhost)
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
+    SECURE_SSL_REDIRECT = False
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
+    SECURE_PROXY_SSL_HEADER = None
 else:
-    DATABASES = {
-        'default': dj_database_url.config(default=DATABASE_URL)
-    }
+    # Production settings
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-
-
+# Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
-# INTERNAL_IPS = [
-#     # ...
-#     "127.0.0.1",
-#     # ...
-# ]
+# Add debug toolbar middleware if in DEBUG mode
+if DEBUG:
+    try:
+        import debug_toolbar
+        MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+        INTERNAL_IPS = ['127.0.0.1']
+    except ImportError:
+        pass
+
 ROOT_URLCONF = 'chatapp.urls'
+
+# Define your template dirs
+template_dirs = []
+if debug_toolbar_path:
+    template_dirs.append(debug_toolbar_path)
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': template_dirs,
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -107,20 +129,38 @@ TEMPLATES = [
     },
 ]
 
-# WSGI_APPLICATION = 'chatapp.wsgi.application'
+# Database
+DATABASE_URL = config('DATABASE_URL', default='postgres://avnadmin:AVNS_RqbTnyzhEWPm8uiBGTT@chatapp-chat111.d.aivencloud.com:28686/defaultdb?sslmode=require')
+DATABASES = {
+    'default': dj_database_url.config(default=DATABASE_URL)
+}
 
+# Redis Configuration
+REDIS_URL = config('REDIS_URL', default="")
+
+# Channels (WebSockets) Configuration
 ASGI_APPLICATION = 'chatapp.asgi.application'
 
-CHANNEL_LAYERS = {
+# Configure channel layers based on DEBUG mode
+if DEBUG:
+    # Use in-memory channel layer for local development
+    CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels.layers.InMemoryChannelLayer"
         },
     }
-
+else:
+    # Use Redis channel layer for production
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [REDIS_URL],
+            },
+        },
+    }
 
 # Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -128,34 +168,20 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
     },
-    # {
-    #     'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    # },
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# Create this directory if it doesn't exist
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
@@ -165,17 +191,59 @@ STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 ]
 
-# BASE_DIR = Path(__file__).resolve().parent.parent
-
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key')
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Authentication URLs
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = 'chat'
 LOGOUT_REDIRECT_URL = 'login'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}
+
+if 'channels' in INSTALLED_APPS:
+    LOGGING['loggers']['channels'] = {
+        'handlers': ['console', 'file'],
+        'level': 'DEBUG',
+        'propagate': False,
+    }
+
+# Ensure logs directory exists
+if not os.path.exists(os.path.join(BASE_DIR, 'logs')):
+    os.makedirs(os.path.join(BASE_DIR, 'logs'))
